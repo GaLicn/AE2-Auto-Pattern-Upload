@@ -1,11 +1,13 @@
 {
 	"package": "com.example.ae2_auto_pattern_upload.mixin",
 	"required": true,
-	"refmap": "${mixin_refmap}",
+	"refmap": "mixins.ae2_auto_pattern_upload.refmap.json",
 	"target": "@env(DEFAULT)",
 	"minVersion": "0.8.5",
 	"compatibilityLevel": "JAVA_8",
 	"mixins": [],
 	"server": [],
-	"client": []
+	"client": [
+        "jei.RecipeTransferHandlerMixin"
+    ]
 }

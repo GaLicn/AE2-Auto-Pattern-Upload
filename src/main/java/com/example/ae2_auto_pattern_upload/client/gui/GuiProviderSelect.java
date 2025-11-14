@@ -2,6 +2,7 @@ package com.example.ae2_auto_pattern_upload.client.gui;
 
 import com.example.ae2_auto_pattern_upload.network.ModNetwork;
 import com.example.ae2_auto_pattern_upload.network.UploadPatternPacket;
+import com.example.ae2_auto_pattern_upload.util.RecipeNameUtil;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
@@ -104,6 +105,17 @@ public class GuiProviderSelect extends GuiScreen {
         // 搜索框
         this.searchBox = new GuiTextField(0, this.mc.fontRenderer,
             centerX - 120, startY - 25, 240, 18);
+
+        if (query.isEmpty()) {
+            String last = RecipeNameUtil.getLastRecipeName();
+            if (last != null && !last.isEmpty()) {
+                query = last;
+                RecipeNameUtil.clearLastRecipeName();
+                page = 0;
+                applyFilter();
+            }
+        }
+
         this.searchBox.setText(query);
         
         // 供应器按钮

@@ -1,9 +1,9 @@
 package com.example.ae2_auto_pattern_upload;
 
-import com.example.ae2_auto_pattern_upload.Tags;
 import com.example.ae2_auto_pattern_upload.network.ModNetwork;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import org.spongepowered.asm.mixin.Mixins;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,7 +20,9 @@ public class ExampleMod {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         LOGGER.info("Hello From {}!", Tags.MOD_NAME);
-        
+
+        Mixins.addConfiguration("mixins.ae2_auto_pattern_upload.json");
+
         // 注册网络包
         ModNetwork.registerPackets();
     }
