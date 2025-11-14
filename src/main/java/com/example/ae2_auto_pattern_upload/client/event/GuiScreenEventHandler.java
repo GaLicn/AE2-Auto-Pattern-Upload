@@ -4,6 +4,7 @@ import com.example.ae2_auto_pattern_upload.network.ModNetwork;
 import com.example.ae2_auto_pattern_upload.network.RequestProvidersListPacket;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -17,9 +18,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 @Mod.EventBusSubscriber(Side.CLIENT)
 public class GuiScreenEventHandler {
-    
+
     private static GuiButton uploadBtn = null;
-    
+
     @SubscribeEvent
     public static void onGuiOpen(GuiScreenEvent.InitGuiEvent.Post event) {
         GuiScreen gui = event.getGui();
@@ -27,20 +28,23 @@ public class GuiScreenEventHandler {
             uploadBtn = null;
             return;
         }
-        
         // 检查是否是样板终端 GUI（使用类名检查避免编译时依赖）
         String guiClassName = gui.getClass().getSimpleName();
         if (!guiClassName.equals("GuiPatternTerm")) {
             uploadBtn = null;
             return;
         }
-        
+
         try {
-            // 使用反射获取 guiLeft, guiTop, ySize（GuiContainer 字段）
-            // 支持开发环境（反混淆）和客户端（混淆）两种情况
-            int guiLeft = getFieldValue(gui, "guiLeft", "field_147003_i");
-            int guiTop = getFieldValue(gui, "guiTop", "field_147009_r");
-            int ySize = getFieldValue(gui, "ySize", "field_147000_g");
+            //使用GuiContainer中get方法获取gui基础信息
+            if (!(gui instanceof GuiContainer)) {
+                uploadBtn = null;
+                return;
+            }
+            GuiContainer container = (GuiContainer) gui;
+            int guiLeft = container.getGuiLeft();
+            int guiTop = container.getGuiTop();
+            int ySize = container.getYSize();
             
             // 编码按钮位置：guiLeft + 147, guiTop + ySize - 142
             // 参照 ExtendedAE Plus 的实现：
