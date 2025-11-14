@@ -119,12 +119,13 @@ public class GuiProviderSelect extends GuiScreen {
         }
         this.searchBox.setText(query);
 
+        int navY = startY + PAGE_SIZE * 25 + 10;
         if (this.mappingField == null) {
-            this.mappingField = new GuiTextField(1, this.mc.fontRenderer, centerX + 50, startY + PAGE_SIZE * 25 + 40, 120, 18);
+            this.mappingField = new GuiTextField(1, this.mc.fontRenderer, centerX - 240, navY + 30, 180, 18);
             this.mappingField.setMaxStringLength(64);
         } else {
-            this.mappingField.x = centerX + 50;
-            this.mappingField.y = startY + PAGE_SIZE * 25 + 40;
+            this.mappingField.x = centerX - 240;
+            this.mappingField.y = navY + 30;
         }
 
         int start = page * PAGE_SIZE;
@@ -136,8 +137,6 @@ public class GuiProviderSelect extends GuiScreen {
             GuiButton button = new GuiButton(ENTRY_BUTTON_BASE + localIndex, centerX - 120, startY + localIndex * 25, 240, 20, label);
             this.buttonList.add(button);
         }
-
-        int navY = startY + PAGE_SIZE * 25 + 10;
         GuiButton prevBtn = new GuiButton(BUTTON_PREV, centerX - 60, navY, 20, 20, "<");
         GuiButton nextBtn = new GuiButton(BUTTON_NEXT, centerX + 40, navY, 20, 20, ">");
         prevBtn.enabled = page > 0;
@@ -145,13 +144,13 @@ public class GuiProviderSelect extends GuiScreen {
         this.buttonList.add(prevBtn);
         this.buttonList.add(nextBtn);
 
-        GuiButton reloadBtn = new GuiButton(BUTTON_RELOAD, centerX - 130, navY + 30, 80, 20, translate("gui.ae2_auto_pattern_upload.reload"));
-        GuiButton addBtn = new GuiButton(BUTTON_ADD, centerX + 175, navY + 30, 60, 20, translate("gui.ae2_auto_pattern_upload.add"));
-        GuiButton delBtn = new GuiButton(BUTTON_DELETE, centerX + 240, navY + 30, 60, 20, translate("gui.ae2_auto_pattern_upload.delete"));
-        GuiButton closeBtn = new GuiButton(BUTTON_CLOSE, centerX - 40, navY + 30, 80, 20, translate("gui.cancel"));
+        GuiButton addBtn = new GuiButton(BUTTON_ADD, centerX - 50, navY + 30, 50, 20, translate("gui.ae2_auto_pattern_upload.add"));
+        GuiButton reloadBtn = new GuiButton(BUTTON_RELOAD, centerX + 10, navY + 30, 60, 20, translate("gui.ae2_auto_pattern_upload.reload"));
+        GuiButton delBtn = new GuiButton(BUTTON_DELETE, centerX + 80, navY + 30, 50, 20, translate("gui.ae2_auto_pattern_upload.delete"));
+        GuiButton closeBtn = new GuiButton(BUTTON_CLOSE, centerX + 140, navY + 30, 60, 20, translate("gui.cancel"));
 
-        this.buttonList.add(reloadBtn);
         this.buttonList.add(addBtn);
+        this.buttonList.add(reloadBtn);
         this.buttonList.add(delBtn);
         this.buttonList.add(closeBtn);
     }
@@ -331,7 +330,7 @@ public class GuiProviderSelect extends GuiScreen {
         String title = translate("ae2_auto_pattern_upload.select_provider");
         this.mc.fontRenderer.drawStringWithShadow(title,
                 this.width / 2 - this.mc.fontRenderer.getStringWidth(title) / 2,
-                this.height / 2 - 100, 0xFFFFFF);
+                this.height / 2 - 130, 0xFFFFFF);
 
         if (searchBox != null) {
             searchBox.drawTextBox();
@@ -343,7 +342,7 @@ public class GuiProviderSelect extends GuiScreen {
         String mappingLabel = translate("gui.ae2_auto_pattern_upload.mapping_label");
         this.mc.fontRenderer.drawString(mappingLabel,
                 this.mappingField.x - this.mc.fontRenderer.getStringWidth(mappingLabel) - 4,
-                this.mappingField.y + 5, 0xFFFFFF);
+                this.mappingField.y + 2, 0xFFFFFF);
 
         super.drawScreen(mouseX, mouseY, partialTicks);
     }

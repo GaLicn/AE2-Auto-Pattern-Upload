@@ -8,6 +8,7 @@ gui.ae2_auto_pattern_upload.cancel=取消
 gui.ae2_auto_pattern_upload.mapping_label=映射名称:
 gui.ae2_auto_pattern_upload.select_provider=选择供应器
 gui.ae2_auto_pattern_upload.search_placeholder=搜索...
+ae2_auto_pattern_upload.select_provider=选择供应器
 
 # Error Messages
 ae2_auto_pattern_upload.error.read_mappings=无法读取 recipe_names.json: %s

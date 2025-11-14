@@ -8,6 +8,7 @@ gui.ae2_auto_pattern_upload.cancel=Cancel
 gui.ae2_auto_pattern_upload.mapping_label=Mapping Name:
 gui.ae2_auto_pattern_upload.select_provider=Select Provider
 gui.ae2_auto_pattern_upload.search_placeholder=Search...
+ae2_auto_pattern_upload.select_provider=Select Provider
 
 # Error Messages
 ae2_auto_pattern_upload.error.read_mappings=Unable to read recipe_names.json: %s
