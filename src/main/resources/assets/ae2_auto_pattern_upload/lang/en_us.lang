@@ -1,0 +1,29 @@
+# AE2 Auto Pattern Upload - English Translation
+
+# GUI Messages
+gui.ae2_auto_pattern_upload.reload=Reload
+gui.ae2_auto_pattern_upload.add=Add
+gui.ae2_auto_pattern_upload.delete=Delete
+gui.ae2_auto_pattern_upload.cancel=Cancel
+gui.ae2_auto_pattern_upload.mapping_label=Mapping Name:
+gui.ae2_auto_pattern_upload.select_provider=Select Provider
+gui.ae2_auto_pattern_upload.search_placeholder=Search...
+
+# Error Messages
+ae2_auto_pattern_upload.error.read_mappings=Unable to read recipe_names.json: %s
+ae2_auto_pattern_upload.error.create_template=Unable to create recipe_names.json template: %s
+ae2_auto_pattern_upload.error.write_mappings=Unable to write recipe_names.json: %s
+
+# Info Messages
+ae2_auto_pattern_upload.info.mappings_reloaded=Mappings reloaded
+ae2_auto_pattern_upload.info.mapping_added=Added/Updated mapping: %s -> %s
+ae2_auto_pattern_upload.info.mapping_add_failed=Failed to add mapping
+ae2_auto_pattern_upload.info.mapping_deleted=Deleted %d mapping(s)
+ae2_auto_pattern_upload.info.mapping_not_found=Mapping not found
+ae2_auto_pattern_upload.info.enter_keyword=Please enter a search keyword before adding a mapping
+ae2_auto_pattern_upload.info.enter_mapping_name=Please enter a mapping name
+ae2_auto_pattern_upload.info.enter_mapping_delete=Please enter a mapping name before deleting
+
+# Mixin Messages
+ae2_auto_pattern_upload.mixin.recipe_category_captured=Captured JEI recipe category: %s
+ae2_auto_pattern_upload.mixin.mapped_keyword=Mapped keyword: %s

@@ -216,44 +216,44 @@ public class GuiProviderSelect extends GuiScreen {
         RecipeNameUtil.reloadMappings();
         applyFilter();
         needsRefresh = true;
-        sendClientMessage("映射表已重载");
+        sendClientMessage(translate("ae2_auto_pattern_upload.info.mappings_reloaded"));
     }
 
     private void addMappingFromUI() {
         String key = query == null ? "" : query.trim();
         String value = mappingField == null ? "" : mappingField.getText().trim();
         if (key.isEmpty()) {
-            sendClientMessage("请输入搜索关键字后再添加映射");
+            sendClientMessage(translate("ae2_auto_pattern_upload.info.enter_keyword"));
             return;
         }
         if (value.isEmpty()) {
-            sendClientMessage("请输入映射名称");
+            sendClientMessage(translate("ae2_auto_pattern_upload.info.enter_mapping_name"));
             return;
         }
         if (RecipeNameUtil.addOrUpdateMapping(key, value)) {
-            sendClientMessage("已添加/更新映射: " + key + " -> " + value);
+            sendClientMessage(String.format(translate("ae2_auto_pattern_upload.info.mapping_added"), key, value));
             RecipeNameUtil.reloadMappings();
             applyFilter();
             needsRefresh = true;
         } else {
-            sendClientMessage("添加映射失败");
+            sendClientMessage(translate("ae2_auto_pattern_upload.info.mapping_add_failed"));
         }
     }
 
     private void deleteMappingFromUI() {
         String value = mappingField == null ? "" : mappingField.getText().trim();
         if (value.isEmpty()) {
-            sendClientMessage("请输入映射名称后再删除");
+            sendClientMessage(translate("ae2_auto_pattern_upload.info.enter_mapping_delete"));
             return;
         }
         int removed = RecipeNameUtil.removeMappingsByCnValue(value);
         if (removed > 0) {
-            sendClientMessage("已删除 " + removed + " 条映射");
+            sendClientMessage(String.format(translate("ae2_auto_pattern_upload.info.mapping_deleted"), removed));
             RecipeNameUtil.reloadMappings();
             applyFilter();
             needsRefresh = true;
         } else {
-            sendClientMessage("未找到指定映射");
+            sendClientMessage(translate("ae2_auto_pattern_upload.info.mapping_not_found"));
         }
     }
 
@@ -328,7 +328,7 @@ public class GuiProviderSelect extends GuiScreen {
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         this.drawDefaultBackground();
-        String title = "Select Provider";
+        String title = translate("ae2_auto_pattern_upload.select_provider");
         this.mc.fontRenderer.drawStringWithShadow(title,
                 this.width / 2 - this.mc.fontRenderer.getStringWidth(title) / 2,
                 this.height / 2 - 100, 0xFFFFFF);
@@ -340,7 +340,7 @@ public class GuiProviderSelect extends GuiScreen {
             mappingField.drawTextBox();
         }
 
-        String mappingLabel = "映射名称:";
+        String mappingLabel = translate("gui.ae2_auto_pattern_upload.mapping_label");
         this.mc.fontRenderer.drawString(mappingLabel,
                 this.mappingField.x - this.mc.fontRenderer.getStringWidth(mappingLabel) - 4,
                 this.mappingField.y + 5, 0xFFFFFF);

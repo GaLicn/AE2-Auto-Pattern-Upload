@@ -171,14 +171,14 @@ public class RecipeNameUtil {
                 }
             }
         } catch (IOException e) {
-            System.err.println("[AE2 Auto Pattern Upload] 无法读取 recipe_names.json: " + e.getMessage());
+            System.err.println("[AE2 Auto Pattern Upload] " + net.minecraft.client.resources.I18n.format("ae2_auto_pattern_upload.error.read_mappings", e.getMessage()));
         }
     }
 
     private static void writeTemplate() {
         JsonObject template = new JsonObject();
-        template.addProperty("示例：minecraft:smelting", "请在此填写自定义名称，例如 熔炉");
-        template.addProperty("示例：appliedenergistics2.inscriber", "铭刻");
+        template.addProperty("example.minecraft.smelting", "example_smelting");
+        template.addProperty("example.appliedenergistics2.inscriber", "example_inscriber");
 
         try {
             Path parent = CONFIG_FILE.getParent();
@@ -190,7 +190,7 @@ public class RecipeNameUtil {
                 writer.write(json);
             }
         } catch (IOException e) {
-            System.err.println("[AE2 Auto Pattern Upload] 无法创建 recipe_names.json 模板: " + e.getMessage());
+            System.err.println("[AE2 Auto Pattern Upload] " + net.minecraft.client.resources.I18n.format("ae2_auto_pattern_upload.error.create_template", e.getMessage()));
         }
     }
 
@@ -209,7 +209,7 @@ public class RecipeNameUtil {
                 writer.write(json);
             }
         } catch (IOException e) {
-            System.err.println("[AE2 Auto Pattern Upload] 无法写入 recipe_names.json: " + e.getMessage());
+            System.err.println("[AE2 Auto Pattern Upload] " + net.minecraft.client.resources.I18n.format("ae2_auto_pattern_upload.error.write_mappings", e.getMessage()));
         }
     }
 

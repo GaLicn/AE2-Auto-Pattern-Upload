@@ -1,0 +1,29 @@
+# AE2 Auto Pattern Upload - 中文翻译
+
+# GUI Messages
+gui.ae2_auto_pattern_upload.reload=重载
+gui.ae2_auto_pattern_upload.add=添加
+gui.ae2_auto_pattern_upload.delete=删除
+gui.ae2_auto_pattern_upload.cancel=取消
+gui.ae2_auto_pattern_upload.mapping_label=映射名称:
+gui.ae2_auto_pattern_upload.select_provider=选择供应器
+gui.ae2_auto_pattern_upload.search_placeholder=搜索...
+
+# Error Messages
+ae2_auto_pattern_upload.error.read_mappings=无法读取 recipe_names.json: %s
+ae2_auto_pattern_upload.error.create_template=无法创建 recipe_names.json 模板: %s
+ae2_auto_pattern_upload.error.write_mappings=无法写入 recipe_names.json: %s
+
+# Info Messages
+ae2_auto_pattern_upload.info.mappings_reloaded=映射表已重载
+ae2_auto_pattern_upload.info.mapping_added=已添加/更新映射: %s -> %s
+ae2_auto_pattern_upload.info.mapping_add_failed=添加映射失败
+ae2_auto_pattern_upload.info.mapping_deleted=已删除 %d 条映射
+ae2_auto_pattern_upload.info.mapping_not_found=未找到指定映射
+ae2_auto_pattern_upload.info.enter_keyword=请输入搜索关键字后再添加映射
+ae2_auto_pattern_upload.info.enter_mapping_name=请输入映射名称
+ae2_auto_pattern_upload.info.enter_mapping_delete=请输入映射名称后再删除
+
+# Mixin Messages
+ae2_auto_pattern_upload.mixin.recipe_category_captured=捕获 JEI 配方类别: %s
+ae2_auto_pattern_upload.mixin.mapped_keyword=映射关键字: %s
