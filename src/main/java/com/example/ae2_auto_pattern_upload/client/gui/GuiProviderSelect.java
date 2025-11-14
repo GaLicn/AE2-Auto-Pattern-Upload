@@ -42,6 +42,7 @@ public class GuiProviderSelect extends GuiScreen {
     private String query = "";
     private int page = 0;
     private boolean needsRefresh = false;
+    private String lastAddedMappingName = null;
 
     private static class GroupEntry {
         long id;
@@ -213,6 +214,10 @@ public class GuiProviderSelect extends GuiScreen {
 
     private void reloadMappings() {
         RecipeNameUtil.reloadMappings();
+        if (lastAddedMappingName != null && !lastAddedMappingName.isEmpty()) {
+            query = lastAddedMappingName;
+            page = 0;
+        }
         applyFilter();
         needsRefresh = true;
         sendClientMessage(translate("ae2_auto_pattern_upload.info.mappings_reloaded"));
@@ -231,6 +236,7 @@ public class GuiProviderSelect extends GuiScreen {
         }
         if (RecipeNameUtil.addOrUpdateMapping(key, value)) {
             sendClientMessage(String.format(translate("ae2_auto_pattern_upload.info.mapping_added"), key, value));
+            lastAddedMappingName = value;
             RecipeNameUtil.reloadMappings();
             applyFilter();
             needsRefresh = true;
