@@ -1,6 +1,7 @@
 package com.example.modid;
 
 import com.example.modid.Tags;
+import com.example.modid.network.ModNetwork;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
@@ -19,6 +20,9 @@ public class ExampleMod {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         LOGGER.info("Hello From {}!", Tags.MOD_NAME);
+        
+        // 注册网络包
+        ModNetwork.registerPackets();
     }
 
 }

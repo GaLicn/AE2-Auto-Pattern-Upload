@@ -1,5 +1,5 @@
 {
-	"package": "",
+	"package": "com.example.modid.mixin",
 	"required": true,
 	"refmap": "${mixin_refmap}",
 	"target": "@env(DEFAULT)",
