@@ -165,6 +165,12 @@ public class GuiProviderSelect extends GuiScreen {
     }
     
     @Override
+    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws java.io.IOException {
+        this.searchBox.mouseClicked(mouseX, mouseY, mouseButton);
+        super.mouseClicked(mouseX, mouseY, mouseButton);
+    }
+    
+    @Override
     protected void keyTyped(char typedChar, int keyCode) throws java.io.IOException {
         if (this.searchBox.textboxKeyTyped(typedChar, keyCode)) {
             String newQuery = this.searchBox.getText();
@@ -173,6 +179,7 @@ public class GuiProviderSelect extends GuiScreen {
                 page = 0;
                 applyFilter();
                 this.initGui();
+                this.searchBox.setFocused(true);  // 恢复焦点
             }
         } else {
             super.keyTyped(typedChar, keyCode);
