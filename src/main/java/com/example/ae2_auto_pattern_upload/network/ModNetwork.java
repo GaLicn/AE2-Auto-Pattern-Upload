@@ -27,5 +27,12 @@ public class ModNetwork {
             ProvidersListS2CPacket.class,
             packetId++,
             Side.CLIENT);
+        
+        // C2S: 上传样板到供应器
+        CHANNEL.registerMessage(
+            UploadPatternPacket.Handler.class,
+            UploadPatternPacket.class,
+            packetId++,
+            Side.SERVER);
     }
 }

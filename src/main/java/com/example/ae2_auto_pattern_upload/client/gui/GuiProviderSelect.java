@@ -1,5 +1,7 @@
 package com.example.ae2_auto_pattern_upload.client.gui;
 
+import com.example.ae2_auto_pattern_upload.network.ModNetwork;
+import com.example.ae2_auto_pattern_upload.network.UploadPatternPacket;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
@@ -135,7 +137,8 @@ public class GuiProviderSelect extends GuiScreen {
             int idx = page * PAGE_SIZE + button.id - 1;
             if (idx < filteredIds.size()) {
                 long providerId = filteredIds.get(idx);
-                // TODO: 发送上传样板的包
+                // 发送上传样板的包
+                ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(providerId));
                 this.mc.displayGuiScreen(null);
             }
         } else if (button.id == 100) {
