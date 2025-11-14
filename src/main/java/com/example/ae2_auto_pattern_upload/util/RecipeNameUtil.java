@@ -1,50 +1,40 @@
 package com.example.ae2_auto_pattern_upload.util;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import net.minecraftforge.fml.common.Loader;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 /**
- * 配方名称映射工具
- * 根据配方类型获取搜索关键字
+ * 配方名称映射工具，支持用户自定义 JEI 分类与搜索关键字的对应关系。
  */
 public class RecipeNameUtil {
-    
-    // 配方类型到搜索关键字的映射
-    private static final java.util.Map<String, String> RECIPE_TYPE_MAPPING = new java.util.HashMap<>();
-    
+
+    private static final Gson GSON = new GsonBuilder()
+            .setPrettyPrinting()
+            .disableHtmlEscaping()
+            .create();
+
+    private static final Map<String, String> RAW_MAPPINGS = new HashMap<>();
+    private static final Map<String, String> LOOKUP_MAPPINGS = new HashMap<>();
+    private static final Path CONFIG_FILE;
+
     static {
-        // 原版配方类型映射
-        RECIPE_TYPE_MAPPING.put("crafting", "合成");
-        RECIPE_TYPE_MAPPING.put("smelting", "烧炼");
-        RECIPE_TYPE_MAPPING.put("smoking", "烟熏");
-        RECIPE_TYPE_MAPPING.put("campfire_cooking", "篝火");
-        RECIPE_TYPE_MAPPING.put("stonecutting", "切石");
-
-        // AE2 配方类型映射
-        RECIPE_TYPE_MAPPING.put("ae2:inscriber", "铭刻");
-        RECIPE_TYPE_MAPPING.put("ae2:grindstone", "研磨");
-        RECIPE_TYPE_MAPPING.put("ae2:charger", "充能");
-        RECIPE_TYPE_MAPPING.put("ae2:matter_cannon", "物质炮");
-
-        // GTCEu 配方类型映射
-        RECIPE_TYPE_MAPPING.put("assembler", "装配");
-        RECIPE_TYPE_MAPPING.put("macerator", "粉碎");
-        RECIPE_TYPE_MAPPING.put("extractor", "提取");
-        RECIPE_TYPE_MAPPING.put("compressor", "压缩");
-        RECIPE_TYPE_MAPPING.put("bender", "弯曲");
-        RECIPE_TYPE_MAPPING.put("cutter", "切割");
-        RECIPE_TYPE_MAPPING.put("chemical_reactor", "化学反应");
-        RECIPE_TYPE_MAPPING.put("chemical_bath", "化学浴");
-        RECIPE_TYPE_MAPPING.put("ore_washer", "矿洗");
-        RECIPE_TYPE_MAPPING.put("electrolyzer", "电解");
-        RECIPE_TYPE_MAPPING.put("centrifuge", "离心");
-        RECIPE_TYPE_MAPPING.put("thermal_centrifuge", "热离心");
-        RECIPE_TYPE_MAPPING.put("arc_furnace", "电弧炉");
-        RECIPE_TYPE_MAPPING.put("blast_furnace", "高炉");
-        RECIPE_TYPE_MAPPING.put("vacuum_freezer", "真空冷冻");
-        RECIPE_TYPE_MAPPING.put("implosion_compressor", "内爆压缩");
-        RECIPE_TYPE_MAPPING.put("autoclave", "高压釜");
-        RECIPE_TYPE_MAPPING.put("forming_press", "成型机");
-        RECIPE_TYPE_MAPPING.put("wiremill", "拉丝机");
-        RECIPE_TYPE_MAPPING.put("laser_engraver", "激光刻印");
-        RECIPE_TYPE_MAPPING.put("mixer", "混合");
+        Path configDir = Loader.instance().getConfigDir().toPath();
+        CONFIG_FILE = configDir.resolve("ae2_auto_pattern_upload").resolve("recipe_names.json");
+        loadMappings();
     }
     
     /**
@@ -91,7 +81,7 @@ public class RecipeNameUtil {
         if (recipeType == null || recipeType.isEmpty()) return null;
 
         String path = extractPath(recipeType);
-        String mapped = RECIPE_TYPE_MAPPING.get(path);
+        String mapped = LOOKUP_MAPPINGS.get(path.toLowerCase());
         return mapped != null ? mapped : path;
     }
 
@@ -118,7 +108,7 @@ public class RecipeNameUtil {
             }
         }
 
-        String mapped = RECIPE_TYPE_MAPPING.get(path);
+        String mapped = LOOKUP_MAPPINGS.get(path.toLowerCase());
         if (mapped != null && !mapped.isEmpty()) {
             return mapped;
         }
@@ -149,5 +139,116 @@ public class RecipeNameUtil {
     
     public static void clearLastRecipeName() {
         lastRecipeName = null;
+    }
+
+    private static void loadMappings() {
+        RAW_MAPPINGS.clear();
+        LOOKUP_MAPPINGS.clear();
+
+        if (!Files.exists(CONFIG_FILE)) {
+            writeTemplate();
+            return;
+        }
+
+        try (InputStreamReader reader = new InputStreamReader(Files.newInputStream(CONFIG_FILE), StandardCharsets.UTF_8)) {
+            JsonObject obj = GSON.fromJson(reader, JsonObject.class);
+            if (obj == null) {
+                return;
+            }
+
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                String key = entry.getKey();
+                JsonElement value = entry.getValue();
+                if (key == null || key.trim().isEmpty()) {
+                    continue;
+                }
+                if (value != null && value.isJsonPrimitive()) {
+                    String mapped = value.getAsString();
+                    if (mapped != null && !mapped.trim().isEmpty()) {
+                        RAW_MAPPINGS.put(key.trim(), mapped.trim());
+                        LOOKUP_MAPPINGS.put(key.trim().toLowerCase(), mapped.trim());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("[AE2 Auto Pattern Upload] 无法读取 recipe_names.json: " + e.getMessage());
+        }
+    }
+
+    private static void writeTemplate() {
+        JsonObject template = new JsonObject();
+        template.addProperty("示例：minecraft:smelting", "请在此填写自定义名称，例如 熔炉");
+        template.addProperty("示例：appliedenergistics2.inscriber", "铭刻");
+
+        try {
+            Path parent = CONFIG_FILE.getParent();
+            if (parent != null && !Files.exists(parent)) {
+                Files.createDirectories(parent);
+            }
+            String json = GSON.toJson(template);
+            try (OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(CONFIG_FILE), StandardCharsets.UTF_8)) {
+                writer.write(json);
+            }
+        } catch (IOException e) {
+            System.err.println("[AE2 Auto Pattern Upload] 无法创建 recipe_names.json 模板: " + e.getMessage());
+        }
+    }
+
+    private static void saveMappings() {
+        JsonObject obj = new JsonObject();
+        for (Map.Entry<String, String> entry : RAW_MAPPINGS.entrySet()) {
+            obj.addProperty(entry.getKey(), entry.getValue());
+        }
+        try {
+            Path parent = CONFIG_FILE.getParent();
+            if (parent != null && !Files.exists(parent)) {
+                Files.createDirectories(parent);
+            }
+            String json = GSON.toJson(obj);
+            try (OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(CONFIG_FILE), StandardCharsets.UTF_8)) {
+                writer.write(json);
+            }
+        } catch (IOException e) {
+            System.err.println("[AE2 Auto Pattern Upload] 无法写入 recipe_names.json: " + e.getMessage());
+        }
+    }
+
+    public static boolean addOrUpdateMapping(String key, String value) {
+        if (key == null || key.trim().isEmpty() || value == null || value.trim().isEmpty()) {
+            return false;
+        }
+        RAW_MAPPINGS.put(key.trim(), value.trim());
+        LOOKUP_MAPPINGS.put(key.trim().toLowerCase(), value.trim());
+        saveMappings();
+        return true;
+    }
+
+    public static int removeMappingsByCnValue(String cnValue) {
+        if (cnValue == null || cnValue.trim().isEmpty()) {
+            return 0;
+        }
+        String target = cnValue.trim();
+        int removed = 0;
+        Iterator<Map.Entry<String, String>> it = RAW_MAPPINGS.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, String> entry = it.next();
+            if (target.equals(entry.getValue())) {
+                LOOKUP_MAPPINGS.remove(entry.getKey().toLowerCase());
+                it.remove();
+                removed++;
+            }
+        }
+        if (removed > 0) {
+            saveMappings();
+        }
+        return removed;
+    }
+
+    public static void reloadMappings() {
+        loadMappings();
+    }
+
+    public static Map<String, String> getMappingsView() {
+        return Collections.unmodifiableMap(RAW_MAPPINGS);
     }
 }

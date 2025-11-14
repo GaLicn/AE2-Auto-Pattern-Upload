@@ -6,223 +6,354 @@ import com.example.ae2_auto_pattern_upload.util.RecipeNameUtil;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
+import net.minecraft.util.text.TextComponentString;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
- * 供应器选择 GUI
+ * 供应器选择界面，支持搜索、分页和映射维护。
  */
 public class GuiProviderSelect extends GuiScreen {
+
+    private static final int BUTTON_PREV = 100;
+    private static final int BUTTON_NEXT = 101;
+    private static final int BUTTON_RELOAD = 102;
+    private static final int BUTTON_ADD = 103;
+    private static final int BUTTON_DELETE = 104;
+    private static final int BUTTON_CLOSE = 105;
+    private static final int ENTRY_BUTTON_BASE = 200;
+    private static final int PAGE_SIZE = 6;
+
     private final GuiScreen parent;
     private final List<Long> ids;
     private final List<String> names;
     private final List<Integer> emptySlots;
-    
-    // 分组后的数据
-    private final Map<String, ProviderGroup> groups = new LinkedHashMap<>();
-    private final List<String> groupNames = new ArrayList<>();
-    private final List<Long> groupIds = new ArrayList<>();
-    private final List<Integer> groupTotalSlots = new ArrayList<>();
-    private final List<Integer> groupCounts = new ArrayList<>();
-    
-    // 过滤后的数据
-    private final List<String> filteredNames = new ArrayList<>();
-    private final List<Long> filteredIds = new ArrayList<>();
-    private final List<Integer> filteredSlots = new ArrayList<>();
-    private final List<Integer> filteredCounts = new ArrayList<>();
-    
+
+    private final List<GroupEntry> groups = new ArrayList<>();
+    private final List<GroupEntry> filtered = new ArrayList<>();
+
     private GuiTextField searchBox;
+    private GuiTextField mappingField;
     private String query = "";
     private int page = 0;
-    private static final int PAGE_SIZE = 6;
-    
+    private boolean needsRefresh = false;
+
+    private static class GroupEntry {
+        long id;
+        String name;
+        int totalSlots;
+        int count;
+        int bestSlots;
+    }
+
     public GuiProviderSelect(List<Long> ids, List<String> names, List<Integer> emptySlots) {
-        super();
         this.parent = null;
         this.ids = ids;
         this.names = names;
         this.emptySlots = emptySlots;
-        
+
+        String recent = RecipeNameUtil.getLastRecipeName();
+        if (recent != null && !recent.isEmpty()) {
+            this.query = recent;
+            RecipeNameUtil.clearLastRecipeName();
+        }
+
         buildGroups();
         applyFilter();
     }
-    
+
     private void buildGroups() {
-        groups.clear();
-        groupNames.clear();
-        groupIds.clear();
-        groupTotalSlots.clear();
-        groupCounts.clear();
-        
+        Map<String, GroupEntry> map = new LinkedHashMap<>();
         for (int i = 0; i < names.size(); i++) {
             String name = names.get(i);
             long id = ids.get(i);
             int slots = emptySlots.get(i);
-            
-            ProviderGroup group = groups.computeIfAbsent(name, k -> new ProviderGroup());
-            group.count++;
-            group.totalSlots += Math.max(0, slots);
-            
-            if (slots > group.bestSlots) {
-                group.bestSlots = slots;
-                group.bestId = id;
+
+            GroupEntry entry = map.computeIfAbsent(name, k -> {
+                GroupEntry ge = new GroupEntry();
+                ge.name = name;
+                return ge;
+            });
+            entry.count++;
+            entry.totalSlots += Math.max(0, slots);
+            if (slots > entry.bestSlots || entry.id == 0L) {
+                entry.bestSlots = Math.max(0, slots);
+                entry.id = id;
             }
         }
-        
-        for (Map.Entry<String, ProviderGroup> e : groups.entrySet()) {
-            groupNames.add(e.getKey());
-            groupIds.add(e.getValue().bestId);
-            groupTotalSlots.add(e.getValue().totalSlots);
-            groupCounts.add(e.getValue().count);
-        }
+        groups.clear();
+        groups.addAll(map.values());
     }
-    
+
     private void applyFilter() {
-        filteredNames.clear();
-        filteredIds.clear();
-        filteredSlots.clear();
-        filteredCounts.clear();
-        
-        String q = query.trim().toLowerCase();
-        for (int i = 0; i < groupNames.size(); i++) {
-            String name = groupNames.get(i).toLowerCase();
-            if (q.isEmpty() || name.contains(q)) {
-                filteredNames.add(groupNames.get(i));
-                filteredIds.add(groupIds.get(i));
-                filteredSlots.add(groupTotalSlots.get(i));
-                filteredCounts.add(groupCounts.get(i));
+        filtered.clear();
+        String q = query == null ? "" : query.trim().toLowerCase();
+        for (GroupEntry entry : groups) {
+            if (q.isEmpty() || entry.name.toLowerCase().contains(q)) {
+                filtered.add(entry);
             }
         }
+        if (!q.isEmpty() && filtered.isEmpty()) {
+            filtered.addAll(groups);
+        }
     }
-    
+
     @Override
     public void initGui() {
         this.buttonList.clear();
-        
+
         int centerX = this.width / 2;
         int startY = this.height / 2 - 70;
-        
-        // 搜索框
-        this.searchBox = new GuiTextField(0, this.mc.fontRenderer,
-            centerX - 120, startY - 25, 240, 18);
 
-        if (query.isEmpty()) {
-            String last = RecipeNameUtil.getLastRecipeName();
-            if (last != null && !last.isEmpty()) {
-                query = last;
-                RecipeNameUtil.clearLastRecipeName();
-                page = 0;
-                applyFilter();
-            }
+        if (this.searchBox == null) {
+            this.searchBox = new GuiTextField(0, this.mc.fontRenderer, centerX - 120, startY - 25, 240, 18);
+            this.searchBox.setMaxStringLength(64);
+        } else {
+            this.searchBox.x = centerX - 120;
+            this.searchBox.y = startY - 25;
         }
-
         this.searchBox.setText(query);
-        
-        // 供应器按钮
-        int start = page * PAGE_SIZE;
-        int end = Math.min(start + PAGE_SIZE, filteredIds.size());
-        
-        for (int i = start; i < end; i++) {
-            String label = filteredNames.get(i) + " (" + filteredSlots.get(i) + ") x" + filteredCounts.get(i);
-            GuiButton btn = new GuiButton(i - start + 1,
-                centerX - 120, startY + (i - start) * 25, 240, 20, label);
-            this.buttonList.add(btn);
+
+        if (this.mappingField == null) {
+            this.mappingField = new GuiTextField(1, this.mc.fontRenderer, centerX + 50, startY + PAGE_SIZE * 25 + 40, 120, 18);
+            this.mappingField.setMaxStringLength(64);
+        } else {
+            this.mappingField.x = centerX + 50;
+            this.mappingField.y = startY + PAGE_SIZE * 25 + 40;
         }
-        
-        // 分页按钮
+
+        int start = page * PAGE_SIZE;
+        int end = Math.min(start + PAGE_SIZE, filtered.size());
+        for (int i = start; i < end; i++) {
+            int localIndex = i - start;
+            GroupEntry entry = filtered.get(i);
+            String label = buildLabel(entry);
+            GuiButton button = new GuiButton(ENTRY_BUTTON_BASE + localIndex, centerX - 120, startY + localIndex * 25, 240, 20, label);
+            this.buttonList.add(button);
+        }
+
         int navY = startY + PAGE_SIZE * 25 + 10;
-        GuiButton prevBtn = new GuiButton(100, centerX - 60, navY, 20, 20, "<");
-        GuiButton nextBtn = new GuiButton(101, centerX + 40, navY, 20, 20, ">");
+        GuiButton prevBtn = new GuiButton(BUTTON_PREV, centerX - 60, navY, 20, 20, "<");
+        GuiButton nextBtn = new GuiButton(BUTTON_NEXT, centerX + 40, navY, 20, 20, ">");
         prevBtn.enabled = page > 0;
-        nextBtn.enabled = (page + 1) * PAGE_SIZE < filteredIds.size();
+        nextBtn.enabled = (page + 1) * PAGE_SIZE < filtered.size();
         this.buttonList.add(prevBtn);
         this.buttonList.add(nextBtn);
-        
-        // 关闭按钮
-        GuiButton closeBtn = new GuiButton(102, centerX - 40, navY, 80, 20, "Close");
+
+        GuiButton reloadBtn = new GuiButton(BUTTON_RELOAD, centerX - 130, navY + 30, 80, 20, translate("gui.ae2_auto_pattern_upload.reload"));
+        GuiButton addBtn = new GuiButton(BUTTON_ADD, centerX + 175, navY + 30, 60, 20, translate("gui.ae2_auto_pattern_upload.add"));
+        GuiButton delBtn = new GuiButton(BUTTON_DELETE, centerX + 240, navY + 30, 60, 20, translate("gui.ae2_auto_pattern_upload.delete"));
+        GuiButton closeBtn = new GuiButton(BUTTON_CLOSE, centerX - 40, navY + 30, 80, 20, translate("gui.cancel"));
+
+        this.buttonList.add(reloadBtn);
+        this.buttonList.add(addBtn);
+        this.buttonList.add(delBtn);
         this.buttonList.add(closeBtn);
     }
-    
+
+    private String buildLabel(GroupEntry entry) {
+        return entry.name + " (" + entry.totalSlots + ") x" + entry.count;
+    }
+
     @Override
-    protected void actionPerformed(GuiButton button) {
-        if (button.id >= 1 && button.id <= PAGE_SIZE) {
-            int idx = page * PAGE_SIZE + button.id - 1;
-            if (idx < filteredIds.size()) {
-                long providerId = filteredIds.get(idx);
-                // 发送上传样板的包
+    protected void actionPerformed(GuiButton button) throws IOException {
+        if (!button.enabled) {
+            return;
+        }
+        int start = page * PAGE_SIZE;
+        if (button.id >= ENTRY_BUTTON_BASE && button.id < ENTRY_BUTTON_BASE + PAGE_SIZE) {
+            int idx = start + (button.id - ENTRY_BUTTON_BASE);
+            if (idx >= 0 && idx < filtered.size()) {
+                long providerId = filtered.get(idx).id;
                 ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(providerId));
                 this.mc.displayGuiScreen(null);
             }
-        } else if (button.id == 100) {
-            // 上一页
-            if (page > 0) {
-                page--;
-                this.initGui();
-            }
-        } else if (button.id == 101) {
-            // 下一页
-            if ((page + 1) * PAGE_SIZE < filteredIds.size()) {
-                page++;
-                this.initGui();
-            }
-        } else if (button.id == 102) {
-            // 关闭
-            this.mc.displayGuiScreen(parent);
+            return;
+        }
+
+        switch (button.id) {
+            case BUTTON_PREV:
+                changePage(-1);
+                break;
+            case BUTTON_NEXT:
+                changePage(1);
+                break;
+            case BUTTON_RELOAD:
+                reloadMappings();
+                break;
+            case BUTTON_ADD:
+                addMappingFromUI();
+                break;
+            case BUTTON_DELETE:
+                deleteMappingFromUI();
+                break;
+            case BUTTON_CLOSE:
+                this.mc.displayGuiScreen(parent);
+                break;
+            default:
+                break;
         }
     }
-    
+
+    private void changePage(int delta) {
+        int newPage = page + delta;
+        if (newPage < 0) {
+            return;
+        }
+        if (newPage * PAGE_SIZE >= filtered.size()) {
+            return;
+        }
+        page = newPage;
+        needsRefresh = true;
+    }
+
+    private void reloadMappings() {
+        RecipeNameUtil.reloadMappings();
+        applyFilter();
+        needsRefresh = true;
+        sendClientMessage("映射表已重载");
+    }
+
+    private void addMappingFromUI() {
+        String key = query == null ? "" : query.trim();
+        String value = mappingField == null ? "" : mappingField.getText().trim();
+        if (key.isEmpty()) {
+            sendClientMessage("请输入搜索关键字后再添加映射");
+            return;
+        }
+        if (value.isEmpty()) {
+            sendClientMessage("请输入映射名称");
+            return;
+        }
+        if (RecipeNameUtil.addOrUpdateMapping(key, value)) {
+            sendClientMessage("已添加/更新映射: " + key + " -> " + value);
+            RecipeNameUtil.reloadMappings();
+            applyFilter();
+            needsRefresh = true;
+        } else {
+            sendClientMessage("添加映射失败");
+        }
+    }
+
+    private void deleteMappingFromUI() {
+        String value = mappingField == null ? "" : mappingField.getText().trim();
+        if (value.isEmpty()) {
+            sendClientMessage("请输入映射名称后再删除");
+            return;
+        }
+        int removed = RecipeNameUtil.removeMappingsByCnValue(value);
+        if (removed > 0) {
+            sendClientMessage("已删除 " + removed + " 条映射");
+            RecipeNameUtil.reloadMappings();
+            applyFilter();
+            needsRefresh = true;
+        } else {
+            sendClientMessage("未找到指定映射");
+        }
+    }
+
+    private void sendClientMessage(String msg) {
+        if (this.mc != null && this.mc.player != null) {
+            this.mc.player.sendStatusMessage(new TextComponentString(msg), true);
+        }
+    }
+
     @Override
     public void updateScreen() {
-        this.searchBox.updateCursorCounter();
+        if (searchBox != null) {
+            searchBox.updateCursorCounter();
+        }
+        if (mappingField != null) {
+            mappingField.updateCursorCounter();
+        }
+        if (needsRefresh) {
+            needsRefresh = false;
+            initGui();
+        }
     }
-    
+
     @Override
-    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws java.io.IOException {
-        this.searchBox.mouseClicked(mouseX, mouseY, mouseButton);
+    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+        if (searchBox != null) {
+            searchBox.mouseClicked(mouseX, mouseY, mouseButton);
+        }
+        if (mappingField != null) {
+            mappingField.mouseClicked(mouseX, mouseY, mouseButton);
+        }
+        if (mouseButton == 1 && searchBox != null) {
+            if (isPointInRegion(searchBox.x, searchBox.y, searchBox.width, searchBox.height, mouseX, mouseY)) {
+                if (!searchBox.getText().isEmpty()) {
+                    searchBox.setText("");
+                    query = "";
+                    page = 0;
+                    applyFilter();
+                    needsRefresh = true;
+                }
+                return;
+            }
+        }
         super.mouseClicked(mouseX, mouseY, mouseButton);
     }
-    
+
     @Override
-    protected void keyTyped(char typedChar, int keyCode) throws java.io.IOException {
-        if (this.searchBox.textboxKeyTyped(typedChar, keyCode)) {
-            String newQuery = this.searchBox.getText();
-            if (!newQuery.equals(query)) {
+    protected void keyTyped(char typedChar, int keyCode) throws IOException {
+        boolean handled = false;
+        if (searchBox != null && searchBox.textboxKeyTyped(typedChar, keyCode)) {
+            String newQuery = searchBox.getText();
+            if (!Objects.equals(newQuery, query)) {
                 query = newQuery;
                 page = 0;
                 applyFilter();
-                this.initGui();
-                this.searchBox.setFocused(true);  // 恢复焦点
+                needsRefresh = true;
             }
-        } else {
+            handled = true;
+        }
+        if (mappingField != null && mappingField.textboxKeyTyped(typedChar, keyCode)) {
+            handled = true;
+        }
+        if (!handled) {
             super.keyTyped(typedChar, keyCode);
         }
     }
-    
+
+    private boolean isPointInRegion(int x, int y, int width, int height, int mouseX, int mouseY) {
+        return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
+    }
+
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         this.drawDefaultBackground();
-        
-        // 标题
         String title = "Select Provider";
         this.mc.fontRenderer.drawStringWithShadow(title,
-            this.width / 2 - this.mc.fontRenderer.getStringWidth(title) / 2,
-            this.height / 2 - 100, 0xFFFFFF);
-        
-        // 搜索框
-        this.searchBox.drawTextBox();
-        
+                this.width / 2 - this.mc.fontRenderer.getStringWidth(title) / 2,
+                this.height / 2 - 100, 0xFFFFFF);
+
+        if (searchBox != null) {
+            searchBox.drawTextBox();
+        }
+        if (mappingField != null) {
+            mappingField.drawTextBox();
+        }
+
+        String mappingLabel = "映射名称:";
+        this.mc.fontRenderer.drawString(mappingLabel,
+                this.mappingField.x - this.mc.fontRenderer.getStringWidth(mappingLabel) - 4,
+                this.mappingField.y + 5, 0xFFFFFF);
+
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
-    
+
     @Override
     public boolean doesGuiPauseGame() {
         return false;
     }
-    
-    private static class ProviderGroup {
-        long bestId = Long.MIN_VALUE;
-        int bestSlots = Integer.MIN_VALUE;
-        int totalSlots = 0;
-        int count = 0;
+
+    private String translate(String key) {
+        return net.minecraft.client.resources.I18n.format(key);
     }
 }
