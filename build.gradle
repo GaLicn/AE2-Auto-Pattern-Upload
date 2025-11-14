@@ -191,7 +191,8 @@ processResources {
                 'mod_update_json': propertyString('mod_update_json'),
                 'mod_logo_path': propertyString('mod_logo_path'),
                 'mixin_refmap': propertyString('mixin_refmap'),
-                'mixin_package': propertyString('mixin_package')
+                'mixin_package': propertyString('mixin_package'),
+                'mixin_configs': propertyStringList('mixin_configs').join(' ')
         )
     }
     

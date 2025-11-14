@@ -8,6 +8,7 @@
 	"mixins": [],
 	"server": [],
 	"client": [
-        "jei.RecipeTransferHandlerMixin"
-    ]
+        "jei.RecipeTransferHandlerMixin",
+	    "jei.RecipeTransferUtilMixin"
+	]
 }
