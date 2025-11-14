@@ -1,4 +1,4 @@
-package com.example.modid.network;
+package com.example.ae2_auto_pattern_upload.network;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
@@ -65,7 +65,7 @@ public class ProvidersListS2CPacket implements IMessage {
             Minecraft.getMinecraft().addScheduledTask(() -> {
                 // 打开供应器选择界面
                 Minecraft.getMinecraft().displayGuiScreen(
-                    new com.example.modid.client.gui.GuiProviderSelect(
+                    new com.example.ae2_auto_pattern_upload.client.gui.GuiProviderSelect(
                         message.ids, message.names, message.emptySlots));
             });
             

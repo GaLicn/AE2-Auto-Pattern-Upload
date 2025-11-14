@@ -1,7 +1,7 @@
-package com.example.modid.client.event;
+package com.example.ae2_auto_pattern_upload.client.event;
 
-import com.example.modid.network.ModNetwork;
-import com.example.modid.network.RequestProvidersListPacket;
+import com.example.ae2_auto_pattern_upload.network.ModNetwork;
+import com.example.ae2_auto_pattern_upload.network.RequestProvidersListPacket;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraftforge.client.event.GuiScreenEvent;

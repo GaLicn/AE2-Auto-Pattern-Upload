@@ -1,4 +1,4 @@
-package com.example.modid.client.gui;
+package com.example.ae2_auto_pattern_upload.client.gui;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;

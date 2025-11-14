@@ -1,5 +1,5 @@
 {
-	"package": "com.example.modid.mixin",
+	"package": "com.example.ae2_auto_pattern_upload.mixin",
 	"required": true,
 	"refmap": "${mixin_refmap}",
 	"target": "@env(DEFAULT)",

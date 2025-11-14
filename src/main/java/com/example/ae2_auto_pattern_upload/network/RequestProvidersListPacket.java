@@ -1,4 +1,4 @@
-package com.example.modid.network;
+package com.example.ae2_auto_pattern_upload.network;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;

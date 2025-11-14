@@ -1,7 +1,7 @@
-package com.example.modid;
+package com.example.ae2_auto_pattern_upload;
 
-import com.example.modid.Tags;
-import com.example.modid.network.ModNetwork;
+import com.example.ae2_auto_pattern_upload.Tags;
+import com.example.ae2_auto_pattern_upload.network.ModNetwork;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;

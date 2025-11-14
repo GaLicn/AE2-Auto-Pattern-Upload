@@ -1,4 +1,4 @@
-package com.example.modid.network;
+package com.example.ae2_auto_pattern_upload.network;
 
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
