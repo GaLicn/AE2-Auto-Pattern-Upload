@@ -36,21 +36,22 @@ public class GuiScreenEventHandler {
         }
         
         try {
-            // 使用反射获取 guiLeft, height, guiTop（1.12.2 使用 height 而不是 ySize）
-            int guiLeft = (int) gui.getClass().getField("guiLeft").get(gui);
-            int height = (int) gui.getClass().getField("height").get(gui);
-            int guiTop = (int) gui.getClass().getField("guiTop").get(gui);
+            // 使用反射获取 guiLeft, guiTop, ySize（GuiContainer 字段）
+            // 支持开发环境（反混淆）和客户端（混淆）两种情况
+            int guiLeft = getFieldValue(gui, "guiLeft", "field_147003_i");
+            int guiTop = getFieldValue(gui, "guiTop", "field_147009_r");
+            int ySize = getFieldValue(gui, "ySize", "field_147000_g");
             
-            // 编码按钮位置：guiLeft + 147, guiTop + height - 142
+            // 编码按钮位置：guiLeft + 147, guiTop + ySize - 142
             // 参照 ExtendedAE Plus 的实现：
             // - 按钮尺寸：12x12（缩放为 0.75 倍）
             // - 位置：放在编码按钮的左边紧挨着，向下平移 16 像素
             int encodeButtonX = guiLeft + 147;
-            int encodeButtonY = guiTop + height - 142;
+            int encodeButtonY = guiTop + ySize - 142;
             int uploadBtnWidth = 12;
             int uploadBtnHeight = 12;
             int uploadBtnX = encodeButtonX - uploadBtnWidth;  // 紧挨着编码按钮的左边
-            int uploadBtnY = encodeButtonY + 12;  // 向下平移 16 像素
+            int uploadBtnY = encodeButtonY + 2;  // 向下平移 16 像素
             
             // 创建上传按钮
             uploadBtn = new GuiButton(999, uploadBtnX, uploadBtnY, uploadBtnWidth, uploadBtnHeight, "↑");
@@ -75,5 +76,39 @@ public class GuiScreenEventHandler {
             ModNetwork.CHANNEL.sendToServer(new RequestProvidersListPacket());
             event.setCanceled(true);
         }
+    }
+    
+    /**
+     * 获取字段值，支持多个字段名（用于兼容开发环境和混淆环境）
+     * 会递归搜索所有父类，同时尝试 public 和 private 字段
+     */
+    private static int getFieldValue(Object obj, String... fieldNames) throws Exception {
+        // 首先尝试 public 字段（使用 getField）
+        for (String fieldName : fieldNames) {
+            try {
+                java.lang.reflect.Field field = obj.getClass().getField(fieldName);
+                return (int) field.get(obj);
+            } catch (NoSuchFieldException e) {
+                // 继续尝试下一个字段名
+            }
+        }
+        
+        // 然后尝试 private 字段（使用 getDeclaredField 遍历所有父类）
+        Class<?> clazz = obj.getClass();
+        while (clazz != null) {
+            for (String fieldName : fieldNames) {
+                try {
+                    java.lang.reflect.Field field = clazz.getDeclaredField(fieldName);
+                    field.setAccessible(true);
+                    return (int) field.get(obj);
+                } catch (NoSuchFieldException e) {
+                    // 继续尝试下一个字段名或父类
+                }
+            }
+            clazz = clazz.getSuperclass();
+        }
+        
+        throw new NoSuchFieldException("找不到字段: " + java.util.Arrays.toString(fieldNames) + 
+                                       " 在类 " + obj.getClass().getName() + " 及其父类中");
     }
 }
