@@ -10,13 +10,19 @@ import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 
-@Mod(modid = MyMod.MODID, version = Tags.VERSION, name = "AE2 Auto Pattern Upload", acceptedMinecraftVersions = "[1.7.10]")
+@Mod(
+    modid = MyMod.MODID,
+    version = Tags.VERSION,
+    name = "AE2 Auto Pattern Upload",
+    acceptedMinecraftVersions = "[1.7.10]")
 public class MyMod {
 
     public static final String MODID = "ae2_auto_pattern_upload";
     public static final Logger LOG = LogManager.getLogger(MODID);
 
-    @SidedProxy(clientSide = "com.gali.ae2_auto_pattern_upload.ClientProxy", serverSide = "com.gali.ae2_auto_pattern_upload.CommonProxy")
+    @SidedProxy(
+        clientSide = "com.gali.ae2_auto_pattern_upload.ClientProxy",
+        serverSide = "com.gali.ae2_auto_pattern_upload.CommonProxy")
     public static CommonProxy proxy;
 
     @Mod.EventHandler

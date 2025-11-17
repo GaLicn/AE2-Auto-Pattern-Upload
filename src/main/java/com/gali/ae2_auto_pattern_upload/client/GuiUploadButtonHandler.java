@@ -59,8 +59,13 @@ public class GuiUploadButtonHandler {
         int uploadBtnHeight = 12;
         int uploadBtnX = encodeButtonX - uploadBtnWidth;
         int uploadBtnY = encodeButtonY + 2;
-
-        GuiButton uploadButton = new GuiButton(BUTTON_UPLOAD_ID, uploadBtnX, uploadBtnY, uploadBtnWidth, uploadBtnHeight, "↑");
+        GuiButton uploadButton = new GuiButton(
+            BUTTON_UPLOAD_ID,
+            uploadBtnX,
+            uploadBtnY,
+            uploadBtnWidth,
+            uploadBtnHeight,
+            "↑");
         event.buttonList.add(uploadButton);
     }
 }

@@ -1,8 +1,8 @@
 package com.gali.ae2_auto_pattern_upload;
 
-import cpw.mods.fml.common.event.FMLInitializationEvent;
-
 import com.gali.ae2_auto_pattern_upload.client.GuiUploadButtonHandler;
+
+import cpw.mods.fml.common.event.FMLInitializationEvent;
 
 public class ClientProxy extends CommonProxy {
 
