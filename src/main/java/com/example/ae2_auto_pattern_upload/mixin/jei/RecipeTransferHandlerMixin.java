@@ -35,14 +35,12 @@ public abstract class RecipeTransferHandlerMixin {
             return;
         }
 
-        System.out.println("[AE2 Auto Pattern Upload][Mixin] " + net.minecraft.client.resources.I18n.format("ae2_auto_pattern_upload.mixin.recipe_category_captured", uid));
         String keyword = RecipeNameUtil.mapCategoryUidToSearchKey(uid);
         if (keyword == null || keyword.isEmpty()) {
             keyword = RecipeNameUtil.deriveSearchKeyFromClassName(recipeLayout.getRecipeCategory());
         }
 
         if (keyword != null && !keyword.isEmpty()) {
-            System.out.println("[AE2 Auto Pattern Upload][Mixin] " + net.minecraft.client.resources.I18n.format("ae2_auto_pattern_upload.mixin.mapped_keyword", keyword));
             RecipeNameUtil.setLastRecipeName(keyword);
         }
     }

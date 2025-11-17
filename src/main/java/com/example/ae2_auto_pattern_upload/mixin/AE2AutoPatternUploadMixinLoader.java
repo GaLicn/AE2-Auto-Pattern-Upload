@@ -8,7 +8,6 @@ import java.util.List;
 
 /**
  * 通过 MixinBooter 的 ILateMixinLoader 接口注册本模组的 mixin 配置，
- * 避免依赖 mcmod.info 字段或在 @Mod 事件里手动调用 Mixins.addConfiguration。
  */
 public class AE2AutoPatternUploadMixinLoader implements ILateMixinLoader {
 
