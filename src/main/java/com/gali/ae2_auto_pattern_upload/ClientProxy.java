@@ -1,4 +1,4 @@
-package com.myname.mymodid;
+package com.gali.ae2_auto_pattern_upload;
 
 public class ClientProxy extends CommonProxy {
 

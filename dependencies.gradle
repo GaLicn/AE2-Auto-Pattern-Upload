@@ -35,4 +35,7 @@
  */
 dependencies {
     //runtimeOnlyNonPublishable("com.github.GTNewHorizons:NotEnoughItems:2.7.69-GTNH:dev")
+    implementation("com.github.GTNewHorizons:Applied-Energistics-2-Unofficial:rv3-beta-747-GTNH-pre:dev")
+    implementation("com.github.GTNewHorizons:NotEnoughItems:2.8.39-GTNH:dev")
+    implementation("codechicken:CodeChickenLib:1.7.10-1.1.3.136:dev@jar")
 }

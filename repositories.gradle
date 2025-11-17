@@ -1,5 +1,14 @@
 // Add any additional repositories for your dependencies here.
 
 repositories {
-
+    maven {
+        url = uri("https://nexus.gtnewhorizons.com/repository/releases/")
+    }
+    maven {
+        url = uri("https://nexus.gtnewhorizons.com/repository/maven_cil_li/")
+        metadataSources {
+            artifact()
+            ignoreGradleMetadataRedirection()
+        }
+    }
 }

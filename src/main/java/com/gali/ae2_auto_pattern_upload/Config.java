@@ -1,4 +1,4 @@
-package com.myname.mymodid;
+package com.gali.ae2_auto_pattern_upload;
 
 import java.io.File;
 
