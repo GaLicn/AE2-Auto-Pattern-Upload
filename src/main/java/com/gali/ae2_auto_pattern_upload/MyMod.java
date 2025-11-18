@@ -10,6 +10,8 @@ import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 
+import com.gali.ae2_auto_pattern_upload.network.ModNetwork;
+
 @Mod(
     modid = MyMod.MODID,
     version = Tags.VERSION,
@@ -30,6 +32,7 @@ public class MyMod {
     // GameRegistry." (Remove if not needed)
     public void preInit(FMLPreInitializationEvent event) {
         proxy.preInit(event);
+        ModNetwork.registerPackets();
     }
 
     @Mod.EventHandler

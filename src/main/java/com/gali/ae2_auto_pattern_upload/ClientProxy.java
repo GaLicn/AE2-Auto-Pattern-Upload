@@ -1,6 +1,6 @@
 package com.gali.ae2_auto_pattern_upload;
 
-import com.gali.ae2_auto_pattern_upload.client.GuiUploadButtonHandler;
+import com.gali.ae2_auto_pattern_upload.client.event.GuiUploadButtonHandler;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 
