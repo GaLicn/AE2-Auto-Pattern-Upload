@@ -6,9 +6,9 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
 
+import com.gali.ae2_auto_pattern_upload.mixin.GuiContainerAccessor;
 import com.gali.ae2_auto_pattern_upload.network.ModNetwork;
 import com.gali.ae2_auto_pattern_upload.network.RequestProvidersListPacket;
-import com.gali.ae2_auto_pattern_upload.mixin.GuiContainerAccessor;
 
 import appeng.client.gui.implementations.GuiPatternTerm;
 import appeng.client.gui.implementations.GuiPatternTermEx;

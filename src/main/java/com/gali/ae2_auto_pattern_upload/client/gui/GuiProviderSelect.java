@@ -6,14 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import com.gali.ae2_auto_pattern_upload.network.ModNetwork;
-import com.gali.ae2_auto_pattern_upload.network.UploadPatternPacket;
-import com.gali.ae2_auto_pattern_upload.util.RecipeNameUtil;
-import net.minecraft.util.StatCollector;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.StatCollector;
+
+import com.gali.ae2_auto_pattern_upload.network.ModNetwork;
+import com.gali.ae2_auto_pattern_upload.network.UploadPatternPacket;
+import com.gali.ae2_auto_pattern_upload.util.RecipeNameUtil;
 
 /**
  * 供应器选择界面，移植自 1.12.2 版本，兼容 1.7.10。
@@ -45,6 +46,7 @@ public class GuiProviderSelect extends GuiScreen {
     private String lastAddedMappingName = null;
 
     private static class GroupEntry {
+
         long id;
         String name;
         int totalSlots;
@@ -98,9 +100,12 @@ public class GuiProviderSelect extends GuiScreen {
 
     private void applyFilter() {
         filtered.clear();
-        String q = query == null ? "" : query.trim().toLowerCase();
+        String q = query == null ? ""
+            : query.trim()
+                .toLowerCase();
         for (GroupEntry entry : groups) {
-            if (q.isEmpty() || entry.name.toLowerCase().contains(q)) {
+            if (q.isEmpty() || entry.name.toLowerCase()
+                .contains(q)) {
                 filtered.add(entry);
             }
         }
@@ -141,7 +146,12 @@ public class GuiProviderSelect extends GuiScreen {
             GroupEntry entry = filtered.get(i);
             String label = buildLabel(entry);
             GuiButton button = new GuiButton(
-                    ENTRY_BUTTON_BASE + localIndex, centerX - 120, startY + localIndex * 25, 240, 20, label);
+                ENTRY_BUTTON_BASE + localIndex,
+                centerX - 120,
+                startY + localIndex * 25,
+                240,
+                20,
+                label);
             this.buttonList.add(button);
         }
         GuiButton prevBtn = new GuiButton(BUTTON_PREV, centerX - 60, navY, 20, 20, "<");
@@ -151,9 +161,27 @@ public class GuiProviderSelect extends GuiScreen {
         this.buttonList.add(prevBtn);
         this.buttonList.add(nextBtn);
 
-        GuiButton addBtn = new GuiButton(BUTTON_ADD, centerX - 50, navY + 30, 50, 20, translate("gui.ae2_auto_pattern_upload.add"));
-        GuiButton reloadBtn = new GuiButton(BUTTON_RELOAD, centerX + 10, navY + 30, 60, 20, translate("gui.ae2_auto_pattern_upload.reload"));
-        GuiButton delBtn = new GuiButton(BUTTON_DELETE, centerX + 80, navY + 30, 50, 20, translate("gui.ae2_auto_pattern_upload.delete"));
+        GuiButton addBtn = new GuiButton(
+            BUTTON_ADD,
+            centerX - 50,
+            navY + 30,
+            50,
+            20,
+            translate("gui.ae2_auto_pattern_upload.add"));
+        GuiButton reloadBtn = new GuiButton(
+            BUTTON_RELOAD,
+            centerX + 10,
+            navY + 30,
+            60,
+            20,
+            translate("gui.ae2_auto_pattern_upload.reload"));
+        GuiButton delBtn = new GuiButton(
+            BUTTON_DELETE,
+            centerX + 80,
+            navY + 30,
+            50,
+            20,
+            translate("gui.ae2_auto_pattern_upload.delete"));
         GuiButton closeBtn = new GuiButton(BUTTON_CLOSE, centerX + 140, navY + 30, 60, 20, translate("gui.cancel"));
 
         this.buttonList.add(addBtn);
@@ -206,7 +234,6 @@ public class GuiProviderSelect extends GuiScreen {
         }
     }
 
-
     protected void handleSelect(long providerId) {
         ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(providerId));
         if (this.parent != null) {
@@ -241,7 +268,9 @@ public class GuiProviderSelect extends GuiScreen {
 
     private void addMappingFromUI() {
         String key = query == null ? "" : query.trim();
-        String value = mappingField == null ? "" : mappingField.getText().trim();
+        String value = mappingField == null ? ""
+            : mappingField.getText()
+                .trim();
         if (key.isEmpty()) {
             sendClientMessage(translate("ae2_auto_pattern_upload.info.enter_keyword"));
             return;
@@ -262,7 +291,9 @@ public class GuiProviderSelect extends GuiScreen {
     }
 
     private void deleteMappingFromUI() {
-        String value = mappingField == null ? "" : mappingField.getText().trim();
+        String value = mappingField == null ? ""
+            : mappingField.getText()
+                .trim();
         if (value.isEmpty()) {
             sendClientMessage(translate("ae2_auto_pattern_upload.info.enter_mapping_delete"));
             return;
@@ -302,8 +333,7 @@ public class GuiProviderSelect extends GuiScreen {
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
         try {
             super.mouseClicked(mouseX, mouseY, mouseButton);
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
         if (searchBox != null) {
             searchBox.mouseClicked(mouseX, mouseY, mouseButton);
         }
@@ -311,9 +341,15 @@ public class GuiProviderSelect extends GuiScreen {
             mappingField.mouseClicked(mouseX, mouseY, mouseButton);
         }
         if (mouseButton == 1 && searchBox != null) {
-            if (isPointInRegion(searchBox.xPosition, searchBox.yPosition, searchBox.width, searchBox.height, mouseX,
-                    mouseY)) {
-                if (!searchBox.getText().isEmpty()) {
+            if (isPointInRegion(
+                searchBox.xPosition,
+                searchBox.yPosition,
+                searchBox.width,
+                searchBox.height,
+                mouseX,
+                mouseY)) {
+                if (!searchBox.getText()
+                    .isEmpty()) {
                     searchBox.setText("");
                     query = "";
                     page = 0;
@@ -354,9 +390,11 @@ public class GuiProviderSelect extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         this.drawDefaultBackground();
         String title = translate("ae2_auto_pattern_upload.select_provider");
-        this.fontRendererObj.drawStringWithShadow(title,
-                this.width / 2 - this.fontRendererObj.getStringWidth(title) / 2,
-                this.height / 2 - 130, 0xFFFFFF);
+        this.fontRendererObj.drawStringWithShadow(
+            title,
+            this.width / 2 - this.fontRendererObj.getStringWidth(title) / 2,
+            this.height / 2 - 130,
+            0xFFFFFF);
 
         if (searchBox != null) {
             searchBox.drawTextBox();
@@ -366,9 +404,11 @@ public class GuiProviderSelect extends GuiScreen {
         }
 
         String mappingLabel = translate("gui.ae2_auto_pattern_upload.mapping_label");
-        this.fontRendererObj.drawString(mappingLabel,
-                this.mappingField.xPosition - this.fontRendererObj.getStringWidth(mappingLabel) - 4,
-                this.mappingField.yPosition + 2, 0xFFFFFF);
+        this.fontRendererObj.drawString(
+            mappingLabel,
+            this.mappingField.xPosition - this.fontRendererObj.getStringWidth(mappingLabel) - 4,
+            this.mappingField.yPosition + 2,
+            0xFFFFFF);
 
         super.drawScreen(mouseX, mouseY, partialTicks);
     }

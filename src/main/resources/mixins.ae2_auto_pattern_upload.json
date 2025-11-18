@@ -1,5 +1,5 @@
 {
-  "required": true,
+  "required": false,
   "minVersion": "0.8",
   "package": "com.gali.ae2_auto_pattern_upload.mixin",
   "compatibilityLevel": "JAVA_8",
@@ -7,9 +7,9 @@
   "mixins": [
   ],
   "client": [
-    "GuiContainerAccessor",
+    "nee.MixinNEEPatternTerminalHandler",
     "nei.MixinDefaultOverlayHandler",
-    "nee.MixinNEEPatternTerminalHandler"
+    "GuiContainerAccessor"
   ],
   "server": [
   ],

@@ -1,12 +1,5 @@
 package com.gali.ae2_auto_pattern_upload.util;
 
-import com.gali.ae2_auto_pattern_upload.MyMod;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import codechicken.nei.recipe.IRecipeHandler;
-import cpw.mods.fml.common.Loader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -19,17 +12,27 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import net.minecraft.util.StatCollector;
+
+import com.gali.ae2_auto_pattern_upload.MyMod;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
+import codechicken.nei.recipe.IRecipeHandler;
+import cpw.mods.fml.common.Loader;
 
 /**
  * 配方名称映射工具，兼容 1.7.10 环境。
  */
 public final class RecipeNameUtil {
 
-    private static final Gson GSON =
-            new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
+        .disableHtmlEscaping()
+        .create();
 
     private static final Map<String, String> RAW_MAPPINGS = new HashMap<String, String>();
     private static final Map<String, String> LOOKUP_MAPPINGS = new HashMap<String, String>();
@@ -41,8 +44,11 @@ public final class RecipeNameUtil {
     private static String lastRecipeName = null;
 
     static {
-        Path configDir = Loader.instance().getConfigDir().toPath();
-        CONFIG_FILE = configDir.resolve("ae2_auto_pattern_upload").resolve("recipe_names.json");
+        Path configDir = Loader.instance()
+            .getConfigDir()
+            .toPath();
+        CONFIG_FILE = configDir.resolve("ae2_auto_pattern_upload")
+            .resolve("recipe_names.json");
         loadMappings();
     }
 
@@ -61,7 +67,11 @@ public final class RecipeNameUtil {
     }
 
     public static synchronized boolean addOrUpdateMapping(String key, String value) {
-        if (key == null || key.trim().isEmpty() || value == null || value.trim().isEmpty()) {
+        if (key == null || key.trim()
+            .isEmpty()
+            || value == null
+            || value.trim()
+                .isEmpty()) {
             return false;
         }
         RAW_MAPPINGS.put(key.trim(), value.trim());
@@ -71,12 +81,14 @@ public final class RecipeNameUtil {
     }
 
     public static synchronized int removeMappingsByCnValue(String cnValue) {
-        if (cnValue == null || cnValue.trim().isEmpty()) {
+        if (cnValue == null || cnValue.trim()
+            .isEmpty()) {
             return 0;
         }
         String target = cnValue.trim();
         int removed = 0;
-        Iterator<Map.Entry<String, String>> iterator = RAW_MAPPINGS.entrySet().iterator();
+        Iterator<Map.Entry<String, String>> iterator = RAW_MAPPINGS.entrySet()
+            .iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, String> entry = iterator.next();
             if (Objects.equals(entry.getValue(), target)) {
@@ -108,21 +120,24 @@ public final class RecipeNameUtil {
             return;
         }
 
-        try (InputStreamReader reader =
-                new InputStreamReader(Files.newInputStream(CONFIG_FILE), StandardCharsets.UTF_8)) {
+        try (InputStreamReader reader = new InputStreamReader(
+            Files.newInputStream(CONFIG_FILE),
+            StandardCharsets.UTF_8)) {
             JsonObject obj = GSON.fromJson(reader, JsonObject.class);
             if (obj == null) {
                 return;
             }
             for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
                 String key = entry.getKey();
-                if (key == null || key.trim().isEmpty()) {
+                if (key == null || key.trim()
+                    .isEmpty()) {
                     continue;
                 }
                 JsonElement value = entry.getValue();
                 if (value != null && value.isJsonPrimitive()) {
                     String mapped = value.getAsString();
-                    if (mapped != null && !mapped.trim().isEmpty()) {
+                    if (mapped != null && !mapped.trim()
+                        .isEmpty()) {
                         RAW_MAPPINGS.put(key.trim(), mapped.trim());
                         LOOKUP_MAPPINGS.put(normalizeKey(key), mapped.trim());
                     }
@@ -130,9 +145,7 @@ public final class RecipeNameUtil {
             }
         } catch (IOException e) {
             MyMod.LOG.warn(
-                    StatCollector.translateToLocalFormatted(
-                            "ae2_auto_pattern_upload.error.read_mappings",
-                            e.getMessage()));
+                StatCollector.translateToLocalFormatted("ae2_auto_pattern_upload.error.read_mappings", e.getMessage()));
         }
     }
 
@@ -146,15 +159,15 @@ public final class RecipeNameUtil {
             if (parent != null && !Files.exists(parent)) {
                 Files.createDirectories(parent);
             }
-            try (OutputStreamWriter writer =
-                    new OutputStreamWriter(Files.newOutputStream(CONFIG_FILE), StandardCharsets.UTF_8)) {
+            try (OutputStreamWriter writer = new OutputStreamWriter(
+                Files.newOutputStream(CONFIG_FILE),
+                StandardCharsets.UTF_8)) {
                 writer.write(GSON.toJson(template));
             }
         } catch (IOException e) {
             MyMod.LOG.warn(
-                    StatCollector.translateToLocalFormatted(
-                            "ae2_auto_pattern_upload.error.create_template",
-                            e.getMessage()));
+                StatCollector
+                    .translateToLocalFormatted("ae2_auto_pattern_upload.error.create_template", e.getMessage()));
         }
     }
 
@@ -168,15 +181,15 @@ public final class RecipeNameUtil {
             if (parent != null && !Files.exists(parent)) {
                 Files.createDirectories(parent);
             }
-            try (OutputStreamWriter writer =
-                    new OutputStreamWriter(Files.newOutputStream(CONFIG_FILE), StandardCharsets.UTF_8)) {
+            try (OutputStreamWriter writer = new OutputStreamWriter(
+                Files.newOutputStream(CONFIG_FILE),
+                StandardCharsets.UTF_8)) {
                 writer.write(GSON.toJson(obj));
             }
         } catch (IOException e) {
             MyMod.LOG.warn(
-                    StatCollector.translateToLocalFormatted(
-                            "ae2_auto_pattern_upload.error.write_mappings",
-                            e.getMessage()));
+                StatCollector
+                    .translateToLocalFormatted("ae2_auto_pattern_upload.error.write_mappings", e.getMessage()));
         }
     }
 
@@ -184,7 +197,8 @@ public final class RecipeNameUtil {
         if (categoryUid == null || categoryUid.isEmpty()) {
             return null;
         }
-        String normalized = categoryUid.trim().toLowerCase(Locale.ROOT);
+        String normalized = categoryUid.trim()
+            .toLowerCase(Locale.ROOT);
         int colon = normalized.indexOf(':');
         int dot = normalized.indexOf('.');
         String path;
@@ -207,17 +221,23 @@ public final class RecipeNameUtil {
             return null;
         }
         try {
-            String simpleName = recipeObj.getClass().getSimpleName();
-            String packageName = recipeObj.getClass().getPackage().getName().toLowerCase(Locale.ROOT);
+            String simpleName = recipeObj.getClass()
+                .getSimpleName();
+            String packageName = recipeObj.getClass()
+                .getPackage()
+                .getName()
+                .toLowerCase(Locale.ROOT);
 
             String token = CAMEL_CASE_SPLITTER.matcher(simpleName)
-                    .replaceAll(" $1")
-                    .replace("_", " ")
-                    .replace("-", " ")
-                    .trim()
-                    .toLowerCase(Locale.ROOT);
+                .replaceAll(" $1")
+                .replace("_", " ")
+                .replace("-", " ")
+                .trim()
+                .toLowerCase(Locale.ROOT);
 
-            token = token.replace(" recipe", "").replace(" handler", "").trim();
+            token = token.replace(" recipe", "")
+                .replace(" handler", "")
+                .trim();
 
             String namespace = null;
             if (packageName.contains("gregtech")) {
@@ -238,8 +258,7 @@ public final class RecipeNameUtil {
             if (!token.isEmpty()) {
                 return token;
             }
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
         return null;
     }
 
@@ -263,26 +282,28 @@ public final class RecipeNameUtil {
                 }
                 return toDisplayString(overlayId);
             }
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
 
         try {
             String recipeName = handler.getRecipeName();
-            if (recipeName != null && !recipeName.trim().isEmpty()) {
+            if (recipeName != null && !recipeName.trim()
+                .isEmpty()) {
                 String mapped = mapStringToMapping(recipeName);
                 if (mapped != null) {
                     return mapped;
                 }
                 return recipeName.trim();
             }
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
 
-        return toDisplayString(handler.getClass().getSimpleName());
+        return toDisplayString(
+            handler.getClass()
+                .getSimpleName());
     }
 
     private static String mapStringToMapping(String raw) {
-        if (raw == null || raw.trim().isEmpty()) {
+        if (raw == null || raw.trim()
+            .isEmpty()) {
             return null;
         }
         String normalized = normalizeKey(raw);
@@ -296,32 +317,38 @@ public final class RecipeNameUtil {
     private static String safeOverlayIdentifier(IRecipeHandler handler) {
         try {
             String id = handler.getOverlayIdentifier();
-            if (id != null && !id.trim().isEmpty()) {
+            if (id != null && !id.trim()
+                .isEmpty()) {
                 return id;
             }
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
         try {
             String tabName = handler.getRecipeTabName();
-            if (tabName != null && !tabName.trim().isEmpty()) {
+            if (tabName != null && !tabName.trim()
+                .isEmpty()) {
                 return tabName;
             }
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
         return null;
     }
 
     private static String normalizeKey(String key) {
-        return key.trim().toLowerCase(Locale.ROOT);
+        return key.trim()
+            .toLowerCase(Locale.ROOT);
     }
 
     private static String toDisplayString(String raw) {
         if (raw == null) {
             return null;
         }
-        String cleaned = raw.replace('_', ' ').replace('-', ' ').replace('.', ' ').replace(':', ' ');
-        cleaned = CAMEL_CASE_SPLITTER.matcher(cleaned).replaceAll(" $1");
-        cleaned = cleaned.replaceAll("\\s+", " ").trim();
+        String cleaned = raw.replace('_', ' ')
+            .replace('-', ' ')
+            .replace('.', ' ')
+            .replace(':', ' ');
+        cleaned = CAMEL_CASE_SPLITTER.matcher(cleaned)
+            .replaceAll(" $1");
+        cleaned = cleaned.replaceAll("\\s+", " ")
+            .trim();
         return cleaned;
     }
 }

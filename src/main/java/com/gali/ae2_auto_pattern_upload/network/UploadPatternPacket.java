@@ -1,5 +1,12 @@
 package com.gali.ae2_auto_pattern_upload.network;
 
+import java.lang.reflect.Field;
+
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.inventory.Container;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.item.ItemStack;
+
 import appeng.api.AEApi;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
@@ -9,17 +16,12 @@ import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
 import appeng.container.slot.SlotRestrictedInput;
-import java.lang.reflect.Field;
-import appeng.parts.reporting.PartPatternTerminal;
+import appeng.api.networking.security.IActionHost;
+import appeng.parts.AEBasePart;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
-import java.util.List;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.ItemStack;
 
 public class UploadPatternPacket implements IMessage {
 
@@ -51,7 +53,7 @@ public class UploadPatternPacket implements IMessage {
             }
 
             Container container = player.openContainer;
-            PartPatternTerminal terminal = resolveTerminal(container);
+            IActionHost terminal = resolveTerminal(container);
             if (terminal == null) {
                 return null;
             }
@@ -66,7 +68,11 @@ public class UploadPatternPacket implements IMessage {
                 return null;
             }
 
-            if (!AEApi.instance().definitions().items().encodedPattern().isSameAs(encodedPattern)) {
+            if (!AEApi.instance()
+                .definitions()
+                .items()
+                .encodedPattern()
+                .isSameAs(encodedPattern)) {
                 return null;
             }
 
@@ -87,7 +93,9 @@ public class UploadPatternPacket implements IMessage {
 
                 if (insertPatternIntoProvider(target, encodedPattern.copy())) {
                     outputSlot.putStack(null);
-                    terminal.saveChanges();
+                    if (terminal instanceof AEBasePart part) {
+                        part.saveChanges();
+                    }
                 }
             } catch (Throwable t) {
                 t.printStackTrace();
@@ -96,16 +104,12 @@ public class UploadPatternPacket implements IMessage {
             return null;
         }
 
-        private PartPatternTerminal resolveTerminal(Container container) {
+        private IActionHost resolveTerminal(Container container) {
             if (container instanceof ContainerPatternTerm term) {
-                if (term.getPatternTerminal() instanceof PartPatternTerminal part) {
-                    return part;
-                }
+                return term.getPatternTerminal();
             }
             if (container instanceof ContainerPatternTermEx termEx) {
-                if (termEx.getPatternTerminal() instanceof PartPatternTerminal part) {
-                    return part;
-                }
+                return termEx.getPatternTerminal();
             }
             return null;
         }

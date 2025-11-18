@@ -1,23 +1,25 @@
 package com.gali.ae2_auto_pattern_upload.network;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.inventory.Container;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.tileentity.TileEntity;
+
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IMachineSet;
 import appeng.api.networking.crafting.ICraftingProvider;
+import appeng.api.networking.security.IActionHost;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
-import appeng.api.parts.IPatternTerminal;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
-import java.util.ArrayList;
-import java.util.List;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.tileentity.TileEntity;
 
 public class RequestProvidersListPacket implements IMessage {
 
@@ -42,7 +44,7 @@ public class RequestProvidersListPacket implements IMessage {
             }
 
             try {
-                IPatternTerminal terminal = resolveTerminal(container);
+                IActionHost terminal = resolveTerminal(container);
                 if (terminal == null) {
                     return null;
                 }
@@ -91,8 +93,7 @@ public class RequestProvidersListPacket implements IMessage {
                     }
                 }
 
-                ModNetwork.CHANNEL.sendTo(
-                        new ProvidersListS2CPacket(ids, names, emptySlots), player);
+                ModNetwork.CHANNEL.sendTo(new ProvidersListS2CPacket(ids, names, emptySlots), player);
             } catch (Throwable t) {
                 t.printStackTrace();
             }
@@ -100,7 +101,7 @@ public class RequestProvidersListPacket implements IMessage {
             return null;
         }
 
-        private IPatternTerminal resolveTerminal(Container container) {
+        private IActionHost resolveTerminal(Container container) {
             if (container instanceof ContainerPatternTerm term) {
                 return term.getPatternTerminal();
             }
@@ -119,7 +120,8 @@ public class RequestProvidersListPacket implements IMessage {
             if (machine instanceof TileEntity tile) {
                 try {
                     if (tile.getBlockType() != null) {
-                        name = tile.getBlockType().getLocalizedName();
+                        name = tile.getBlockType()
+                            .getLocalizedName();
                     }
                 } catch (Throwable ignored) {}
 
