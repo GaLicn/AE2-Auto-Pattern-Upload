@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import com.gali.ae2_auto_pattern_upload.network.ModNetwork;
 import com.gali.ae2_auto_pattern_upload.network.UploadPatternPacket;
+import com.gali.ae2_auto_pattern_upload.util.RecipeNameUtil;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
@@ -60,6 +61,12 @@ public class GuiProviderSelect extends GuiScreen {
         this.ids = ids == null ? new ArrayList<Long>() : new ArrayList<Long>(ids);
         this.names = names == null ? new ArrayList<String>() : new ArrayList<String>(names);
         this.emptySlots = emptySlots == null ? new ArrayList<Integer>() : new ArrayList<Integer>(emptySlots);
+
+        String recent = RecipeNameUtil.getLastRecipeName();
+        if (recent != null && !recent.isEmpty()) {
+            this.query = recent;
+            RecipeNameUtil.clearLastRecipeName();
+        }
 
         buildGroups();
         applyFilter();
@@ -199,9 +206,7 @@ public class GuiProviderSelect extends GuiScreen {
         }
     }
 
-    /**
-     * 选择供应器后的处理逻辑，留空待后续网络包接入。
-     */
+
     protected void handleSelect(long providerId) {
         ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(providerId));
         if (this.parent != null) {
@@ -224,7 +229,7 @@ public class GuiProviderSelect extends GuiScreen {
     }
 
     private void reloadMappings() {
-        // TODO: 接入 RecipeNameUtil.reloadMappings();
+        RecipeNameUtil.reloadMappings();
         if (lastAddedMappingName != null && !lastAddedMappingName.isEmpty()) {
             query = lastAddedMappingName;
             page = 0;
@@ -245,10 +250,15 @@ public class GuiProviderSelect extends GuiScreen {
             sendClientMessage(translate("ae2_auto_pattern_upload.info.enter_mapping_name"));
             return;
         }
-        // TODO: 接入 RecipeNameUtil.addOrUpdateMapping(key, value)
-        lastAddedMappingName = value;
-        applyFilter();
-        needsRefresh = true;
+        if (RecipeNameUtil.addOrUpdateMapping(key, value)) {
+            sendClientMessage(String.format(translate("ae2_auto_pattern_upload.info.mapping_added"), key, value));
+            lastAddedMappingName = value;
+            RecipeNameUtil.reloadMappings();
+            applyFilter();
+            needsRefresh = true;
+        } else {
+            sendClientMessage(translate("ae2_auto_pattern_upload.info.mapping_add_failed"));
+        }
     }
 
     private void deleteMappingFromUI() {
@@ -257,9 +267,15 @@ public class GuiProviderSelect extends GuiScreen {
             sendClientMessage(translate("ae2_auto_pattern_upload.info.enter_mapping_delete"));
             return;
         }
-        // TODO: 接入 RecipeNameUtil.removeMappingsByCnValue(value)
-        applyFilter();
-        needsRefresh = true;
+        int removed = RecipeNameUtil.removeMappingsByCnValue(value);
+        if (removed > 0) {
+            sendClientMessage(String.format(translate("ae2_auto_pattern_upload.info.mapping_deleted"), removed));
+            RecipeNameUtil.reloadMappings();
+            applyFilter();
+            needsRefresh = true;
+        } else {
+            sendClientMessage(translate("ae2_auto_pattern_upload.info.mapping_not_found"));
+        }
     }
 
     private void sendClientMessage(String msg) {
