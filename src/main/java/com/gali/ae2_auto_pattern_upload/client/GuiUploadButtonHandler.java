@@ -6,6 +6,9 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
 
+import com.gali.ae2_auto_pattern_upload.MyMod;
+import com.gali.ae2_auto_pattern_upload.mixin.GuiContainerAccessor;
+
 import appeng.client.gui.implementations.GuiPatternTerm;
 import appeng.client.gui.implementations.GuiPatternTermEx;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -20,6 +23,7 @@ public class GuiUploadButtonHandler {
 
     @SubscribeEvent
     public void onInitGui(GuiScreenEvent.InitGuiEvent.Post event) {
+        MyMod.LOG.info("监听到ui初始化事件");
         GuiScreen gui = event.gui;
         if (gui == null) {
             return;
@@ -35,22 +39,11 @@ public class GuiUploadButtonHandler {
         }
 
         GuiContainer container = (GuiContainer) gui;
-        int guiLeft;
-        int guiTop;
-        int ySize;
-        try {
-            java.lang.reflect.Field fLeft = GuiContainer.class.getDeclaredField("guiLeft");
-            java.lang.reflect.Field fTop = GuiContainer.class.getDeclaredField("guiTop");
-            java.lang.reflect.Field fYSize = GuiContainer.class.getDeclaredField("ySize");
-            fLeft.setAccessible(true);
-            fTop.setAccessible(true);
-            fYSize.setAccessible(true);
-            guiLeft = fLeft.getInt(container);
-            guiTop = fTop.getInt(container);
-            ySize = fYSize.getInt(container);
-        } catch (Exception e) {
-            return;
-        }
+        GuiContainerAccessor accessor = (GuiContainerAccessor) gui;
+        // 获取编码终端ui界面的坐标信息
+        int guiLeft = accessor.getGuiLeft();
+        int guiTop = accessor.getGuiTop();
+        int ySize = accessor.getYSize();
 
         int encodeButtonX = guiLeft + 147;
         int encodeButtonY = guiTop + ySize - 142;
@@ -67,5 +60,6 @@ public class GuiUploadButtonHandler {
             uploadBtnHeight,
             "↑");
         event.buttonList.add(uploadButton);
+        MyMod.LOG.info("成功添加上传按钮");
     }
 }

@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.gali.ae2_auto_pattern_upload.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "mixins.ae2_auto_pattern_upload.refmap.json",
+  "mixins": [
+  ],
+  "client": [
+    "GuiContainerAccessor"
+  ],
+  "server": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
