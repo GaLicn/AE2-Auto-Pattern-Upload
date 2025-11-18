@@ -9,11 +9,11 @@ import java.util.Objects;
 import com.gali.ae2_auto_pattern_upload.network.ModNetwork;
 import com.gali.ae2_auto_pattern_upload.network.UploadPatternPacket;
 import com.gali.ae2_auto_pattern_upload.util.RecipeNameUtil;
+import net.minecraft.util.StatCollector;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.StatCollector;
 
 /**
  * 供应器选择界面，移植自 1.12.2 版本，兼容 1.7.10。

@@ -1,0 +1,16 @@
+gui.ae2_auto_pattern_upload.add=添加
+gui.ae2_auto_pattern_upload.reload=刷新
+gui.ae2_auto_pattern_upload.delete=删除
+gui.ae2_auto_pattern_upload.mapping_label=映射名称
+ae2_auto_pattern_upload.select_provider=选择供应器
+ae2_auto_pattern_upload.info.mappings_reloaded=映射已重新载入。
+ae2_auto_pattern_upload.info.enter_keyword=请先输入搜索关键字。
+ae2_auto_pattern_upload.info.enter_mapping_name=请输入映射名称。
+ae2_auto_pattern_upload.info.mapping_added=已添加映射：%s -> %s
+ae2_auto_pattern_upload.info.mapping_add_failed=映射添加失败。
+ae2_auto_pattern_upload.info.enter_mapping_delete=请输入要删除的映射名称。
+ae2_auto_pattern_upload.info.mapping_deleted=已删除 %d 条匹配的映射。
+ae2_auto_pattern_upload.info.mapping_not_found=未找到对应的映射。
+ae2_auto_pattern_upload.error.read_mappings=无法读取配方映射：%s
+ae2_auto_pattern_upload.error.create_template=无法创建默认映射模板：%s
+ae2_auto_pattern_upload.error.write_mappings=无法写入配方映射：%s

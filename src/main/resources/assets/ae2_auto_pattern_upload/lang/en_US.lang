@@ -1,0 +1,16 @@
+gui.ae2_auto_pattern_upload.add=Add
+gui.ae2_auto_pattern_upload.reload=Reload
+gui.ae2_auto_pattern_upload.delete=Delete
+gui.ae2_auto_pattern_upload.mapping_label=Mapping Name
+ae2_auto_pattern_upload.select_provider=Select Provider
+ae2_auto_pattern_upload.info.mappings_reloaded=Mappings reloaded.
+ae2_auto_pattern_upload.info.enter_keyword=Please enter a search keyword first.
+ae2_auto_pattern_upload.info.enter_mapping_name=Please enter a mapping name.
+ae2_auto_pattern_upload.info.mapping_added=Mapping added: %s 												-> %s
+ae2_auto_pattern_upload.info.mapping_add_failed=Failed to add mapping.
+ae2_auto_pattern_upload.info.enter_mapping_delete=Please enter the mapping name to delete.
+ae2_auto_pattern_upload.info.mapping_deleted=Removed %d matching mapping(s).
+ae2_auto_pattern_upload.info.mapping_not_found=No mapping with that name was found.
+ae2_auto_pattern_upload.error.read_mappings=Could not read recipe mappings: %s
+ae2_auto_pattern_upload.error.create_template=Could not create default mapping template: %s
+ae2_auto_pattern_upload.error.write_mappings=Could not write recipe mappings: %s
