@@ -7,7 +7,7 @@
   "mixins": [
   ],
   "client": [
-    "nee.MixinNEEPatternTerminalHandler",
+    "nei.MixinRecipeHandlerRef",
     "nei.MixinDefaultOverlayHandler",
     "GuiContainerAccessor"
   ],
