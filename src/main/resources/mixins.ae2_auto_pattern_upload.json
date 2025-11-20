@@ -9,6 +9,7 @@
 	"server": [],
 	"client": [
         "jei.RecipeTransferHandlerMixin",
-	    "jei.RecipeTransferUtilMixin"
+	    "jei.RecipeTransferUtilMixin",
+	    "ae2.GuiMEMonitorableMixin"
 	]
 }
