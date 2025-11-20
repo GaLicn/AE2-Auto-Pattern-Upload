@@ -16,6 +16,10 @@ import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.security.IActionHost;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
+
+import com.glodblock.github.client.gui.container.ContainerFluidPatternTerminal;
+import com.glodblock.github.client.gui.container.ContainerFluidPatternTerminalEx;
+import com.glodblock.github.inventory.item.IItemPatternTerminal;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -39,7 +43,10 @@ public class RequestProvidersListPacket implements IMessage {
             }
 
             Container container = player.openContainer;
-            if (!(container instanceof ContainerPatternTerm) && !(container instanceof ContainerPatternTermEx)) {
+            if (!(container instanceof ContainerPatternTerm)
+                    && !(container instanceof ContainerPatternTermEx)
+                    && !(container instanceof ContainerFluidPatternTerminal)
+                    && !(container instanceof ContainerFluidPatternTerminalEx)) {
                 return null;
             }
 
@@ -107,6 +114,19 @@ public class RequestProvidersListPacket implements IMessage {
             }
             if (container instanceof ContainerPatternTermEx termEx) {
                 return termEx.getPatternTerminal();
+            }
+            if (container instanceof ContainerFluidPatternTerminal fluidTerm) {
+                return fromPatternTerminal(fluidTerm.getPatternTerminal());
+            }
+            if (container instanceof ContainerFluidPatternTerminalEx fluidTermEx) {
+                return fromPatternTerminal(fluidTermEx.getPatternTerminal());
+            }
+            return null;
+        }
+
+        private IActionHost fromPatternTerminal(IItemPatternTerminal terminal) {
+            if (terminal instanceof IActionHost actionHost) {
+                return actionHost;
             }
             return null;
         }

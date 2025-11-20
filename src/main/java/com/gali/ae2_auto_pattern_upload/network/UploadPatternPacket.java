@@ -17,7 +17,13 @@ import appeng.api.networking.security.IActionHost;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
 import appeng.container.slot.SlotRestrictedInput;
+import appeng.helpers.IInterfaceHost;
 import appeng.parts.AEBasePart;
+
+import com.glodblock.github.client.gui.container.ContainerFluidPatternTerminal;
+import com.glodblock.github.client.gui.container.ContainerFluidPatternTerminalEx;
+import com.glodblock.github.client.gui.container.base.FCContainerEncodeTerminal;
+import com.glodblock.github.inventory.item.IItemPatternTerminal;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -91,7 +97,8 @@ public class UploadPatternPacket implements IMessage {
                     return null;
                 }
 
-                if (insertPatternIntoProvider(target, encodedPattern.copy())) {
+                boolean placedInProvider = insertPatternIntoProvider(target, encodedPattern.copy());
+                if (placedInProvider) {
                     outputSlot.putStack(null);
                     if (terminal instanceof AEBasePart part) {
                         part.saveChanges();
@@ -111,6 +118,19 @@ public class UploadPatternPacket implements IMessage {
             if (container instanceof ContainerPatternTermEx termEx) {
                 return termEx.getPatternTerminal();
             }
+            if (container instanceof ContainerFluidPatternTerminal fluidTerm) {
+                return fromPatternTerminal(fluidTerm.getPatternTerminal());
+            }
+            if (container instanceof ContainerFluidPatternTerminalEx fluidTermEx) {
+                return fromPatternTerminal(fluidTermEx.getPatternTerminal());
+            }
+            return null;
+        }
+
+        private IActionHost fromPatternTerminal(IItemPatternTerminal terminal) {
+            if (terminal instanceof IActionHost actionHost) {
+                return actionHost;
+            }
             return null;
         }
 
@@ -125,6 +145,11 @@ public class UploadPatternPacket implements IMessage {
                     Field field = ContainerPatternTermEx.class.getDeclaredField("patternSlotOUT");
                     field.setAccessible(true);
                     return (SlotRestrictedInput) field.get(termEx);
+                }
+                if (container instanceof FCContainerEncodeTerminal fcContainer) {
+                    Field field = FCContainerEncodeTerminal.class.getDeclaredField("patternSlotOUT");
+                    field.setAccessible(true);
+                    return (SlotRestrictedInput) field.get(fcContainer);
                 }
             } catch (Exception ignored) {}
             return null;
@@ -156,18 +181,64 @@ public class UploadPatternPacket implements IMessage {
         }
 
         private boolean insertPatternIntoProvider(ICraftingProvider provider, ItemStack pattern) {
+            // 优先处理接口（IInterfaceHost），确保插入到编码样板槽（patterns）
+            if (provider instanceof IInterfaceHost host) {
+                IInventory patterns = host.getPatterns();
+                if (patterns != null && insertIntoPatternInventory(patterns, pattern)) {
+                    host.saveChanges();
+                    return true;
+                }
+            }
+
             if (provider instanceof IInventory inventory) {
-                for (int i = 0; i < inventory.getSizeInventory(); i++) {
-                    ItemStack slot = inventory.getStackInSlot(i);
-                    if (slot == null || slot.stackSize <= 0) {
+                return insertIntoInventory(inventory, pattern);
+            }
+
+            return false;
+        }
+
+        /**
+         * 将样板插入到编码样板槽（patterns）中
+         * 确保只插入到允许放置编码样板的槽位
+         */
+        private boolean insertIntoPatternInventory(IInventory patterns, ItemStack pattern) {
+            if (patterns == null) {
+                return false;
+            }
+
+            for (int i = 0; i < patterns.getSizeInventory(); i++) {
+                ItemStack slot = patterns.getStackInSlot(i);
+                if (slot == null || slot.stackSize <= 0) {
+                    // 检查该槽位是否允许放置编码样板
+                    if (patterns.isItemValidForSlot(i, pattern)) {
                         ItemStack copy = pattern.copy();
                         copy.stackSize = 1;
-                        inventory.setInventorySlotContents(i, copy);
-                        inventory.markDirty();
+                        patterns.setInventorySlotContents(i, copy);
+                        patterns.markDirty();
                         return true;
                     }
                 }
             }
+
+            return false;
+        }
+
+        private boolean insertIntoInventory(IInventory inventory, ItemStack pattern) {
+            if (inventory == null) {
+                return false;
+            }
+
+            for (int i = 0; i < inventory.getSizeInventory(); i++) {
+                ItemStack slot = inventory.getStackInSlot(i);
+                if (slot == null || slot.stackSize <= 0) {
+                    ItemStack copy = pattern.copy();
+                    copy.stackSize = 1;
+                    inventory.setInventorySlotContents(i, copy);
+                    inventory.markDirty();
+                    return true;
+                }
+            }
+
             return false;
         }
     }
