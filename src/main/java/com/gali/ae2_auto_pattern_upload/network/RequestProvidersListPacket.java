@@ -8,6 +8,10 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.tileentity.TileEntity;
 
+import com.glodblock.github.client.gui.container.ContainerFluidPatternTerminal;
+import com.glodblock.github.client.gui.container.ContainerFluidPatternTerminalEx;
+import com.glodblock.github.inventory.item.IItemPatternTerminal;
+
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
@@ -16,10 +20,6 @@ import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.security.IActionHost;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
-
-import com.glodblock.github.client.gui.container.ContainerFluidPatternTerminal;
-import com.glodblock.github.client.gui.container.ContainerFluidPatternTerminalEx;
-import com.glodblock.github.inventory.item.IItemPatternTerminal;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -43,10 +43,9 @@ public class RequestProvidersListPacket implements IMessage {
             }
 
             Container container = player.openContainer;
-            if (!(container instanceof ContainerPatternTerm)
-                    && !(container instanceof ContainerPatternTermEx)
-                    && !(container instanceof ContainerFluidPatternTerminal)
-                    && !(container instanceof ContainerFluidPatternTerminalEx)) {
+            if (!(container instanceof ContainerPatternTerm) && !(container instanceof ContainerPatternTermEx)
+                && !(container instanceof ContainerFluidPatternTerminal)
+                && !(container instanceof ContainerFluidPatternTerminalEx)) {
                 return null;
             }
 
