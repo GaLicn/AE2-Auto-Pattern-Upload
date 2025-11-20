@@ -42,7 +42,9 @@ public class UploadPatternPacket implements IMessage {
         @Override
         public IMessage onMessage(UploadPatternPacket message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().player;
-            if (player == null) return null;
+            if (player == null) {
+                return null;
+            }
             
             // 检查玩家是否打开编码终端
             if (!(player.openContainer instanceof ContainerPatternEncoder)) {
@@ -53,8 +55,70 @@ public class UploadPatternPacket implements IMessage {
             
             try {
                 // 获取已编码槽位的样板
-                net.minecraftforge.items.IItemHandler patternInventory = container.getPart().getInventoryByName("pattern");
-                if (patternInventory == null) return null;
+                // 对于普通终端，通过 getPart() 获取；对于无线终端，通过 iGuiItemObject 获取
+                net.minecraftforge.items.IItemHandler patternInventory = null;
+                
+                // 尝试通过 getPart() 获取（普通样板终端）
+                try {
+                    java.lang.reflect.Method getPartMethod = container.getClass().getMethod("getPart");
+                    Object part = getPartMethod.invoke(container);
+                    if (part != null) {
+                        java.lang.reflect.Method getInventoryByNameMethod = part.getClass().getMethod("getInventoryByName", String.class);
+                        Object inv = getInventoryByNameMethod.invoke(part, "pattern");
+                        if (inv instanceof net.minecraftforge.items.IItemHandler) {
+                            patternInventory = (net.minecraftforge.items.IItemHandler) inv;
+                        }
+                    }
+                } catch (Exception e) {
+                    // null
+                }
+                
+                // 如果 getPart() 方式失败，尝试通过无线终端字段获取（无线样板终端）
+                if (patternInventory == null) {
+                    try {
+                        // 对于无线终端，pattern 是容器自己的字段
+                        java.lang.reflect.Field patternField = container.getClass().getDeclaredField("pattern");
+                        patternField.setAccessible(true);
+                        Object patternObj = patternField.get(container);
+                        if (patternObj instanceof net.minecraftforge.items.IItemHandler) {
+                            patternInventory = (net.minecraftforge.items.IItemHandler) patternObj;
+                        }
+                    } catch (NoSuchFieldException e) {
+                        // 如果找不到 pattern 字段，尝试通过无线终端对象的 getInventoryByName 获取
+                        try {
+                            java.lang.reflect.Field wirelessTerminalField = null;
+                            try {
+                                wirelessTerminalField = container.getClass().getDeclaredField("wirelessTerminalGUIObject");
+                            } catch (NoSuchFieldException e2) {
+                                try {
+                                    wirelessTerminalField = container.getClass().getSuperclass().getDeclaredField("iGuiItemObject");
+                                } catch (NoSuchFieldException e3) {
+                                    wirelessTerminalField = container.getClass().getDeclaredField("iGuiItemObject");
+                                }
+                            }
+                            
+                            if (wirelessTerminalField != null) {
+                                wirelessTerminalField.setAccessible(true);
+                                Object wirelessTerminal = wirelessTerminalField.get(container);
+                                if (wirelessTerminal != null) {
+                                    java.lang.reflect.Method getInventoryByNameMethod = wirelessTerminal.getClass().getMethod("getInventoryByName", String.class);
+                                    Object inv = getInventoryByNameMethod.invoke(wirelessTerminal, "pattern");
+                                    if (inv instanceof net.minecraftforge.items.IItemHandler) {
+                                        patternInventory = (net.minecraftforge.items.IItemHandler) inv;
+                                    }
+                                }
+                            }
+                        } catch (Exception e2) {
+                            // 忽略异常，继续执行
+                        }
+                    } catch (Exception e) {
+                        // 忽略异常，继续执行
+                    }
+                }
+                
+                if (patternInventory == null) {
+                    return null;
+                }
                 
                 // 获取输出槽位的样板（已编码的样板）
                 ItemStack encodedPattern = patternInventory.getStackInSlot(1);
@@ -68,7 +132,53 @@ public class UploadPatternPacket implements IMessage {
                 }
                 
                 // 获取网络节点和网络
-                IGridNode node = container.getPart().getGridNode();
+                // 对于普通终端，通过 getPart() 获取；对于无线终端，通过 iGuiItemObject 获取
+                IGridNode node = null;
+                
+                // 尝试通过 getPart() 获取（普通样板终端）
+                try {
+                    java.lang.reflect.Method getPartMethod = container.getClass().getMethod("getPart");
+                    Object part = getPartMethod.invoke(container);
+                    if (part != null) {
+                        java.lang.reflect.Method getGridNodeMethod = part.getClass().getMethod("getGridNode", 
+                            appeng.api.util.AEPartLocation.class);
+                        node = (IGridNode) getGridNodeMethod.invoke(part, 
+                            appeng.api.util.AEPartLocation.INTERNAL);
+                    }
+                } catch (Exception e) {
+                    // 如果 getPart() 返回 null 或方法不存在，继续尝试无线终端方式
+                }
+                
+                // 如果 getPart() 方式失败，尝试通过无线终端字段获取（无线样板终端）
+                if (node == null) {
+                    try {
+                        // 首先尝试无线终端专用字段 wirelessTerminalGUIObject
+                        java.lang.reflect.Field wirelessTerminalField = null;
+                        try {
+                            wirelessTerminalField = container.getClass().getDeclaredField("wirelessTerminalGUIObject");
+                        } catch (NoSuchFieldException e) {
+                            // 如果找不到 wirelessTerminalGUIObject，尝试父类的 iGuiItemObject
+                            try {
+                                wirelessTerminalField = container.getClass().getSuperclass().getDeclaredField("iGuiItemObject");
+                            } catch (NoSuchFieldException e2) {
+                                // 继续尝试直接在当前类查找 iGuiItemObject
+                                wirelessTerminalField = container.getClass().getDeclaredField("iGuiItemObject");
+                            }
+                        }
+                        
+                        if (wirelessTerminalField != null) {
+                            wirelessTerminalField.setAccessible(true);
+                            Object wirelessTerminal = wirelessTerminalField.get(container);
+                            if (wirelessTerminal != null && wirelessTerminal instanceof appeng.api.networking.security.IActionHost) {
+                                appeng.api.networking.security.IActionHost actionHost = (appeng.api.networking.security.IActionHost) wirelessTerminal;
+                                node = actionHost.getActionableNode();
+                            }
+                        }
+                    } catch (Exception e) {
+                        // 如果无线终端方式也失败，返回 null
+                    }
+                }
+                
                 if (node == null) return null;
                 
                 IGrid grid = node.getGrid();
@@ -96,7 +206,6 @@ public class UploadPatternPacket implements IMessage {
                 }
                 
                 if (targetProvider == null) {
-                    System.err.println("[上传样板] 找不到目标供应器");
                     return null;
                 }
                 
@@ -126,8 +235,6 @@ public class UploadPatternPacket implements IMessage {
                             net.minecraftforge.items.IItemHandler patternsInv = 
                                 (net.minecraftforge.items.IItemHandler) patternsObj;
                             
-                            System.out.println("[上传样板] 找到样板库存，共 " + patternsInv.getSlots() + " 个槽位");
-                            
                             // 尝试将样板插入到供应器的第一个空槽位
                             for (int i = 0; i < patternsInv.getSlots(); i++) {
                                 ItemStack slot = patternsInv.getStackInSlot(i);
@@ -141,7 +248,6 @@ public class UploadPatternPacket implements IMessage {
                                     
                                     if (remainder == null || remainder.isEmpty()) {
                                         uploadSuccess = true;
-                                        System.out.println("[上传样板] 样板已通过 getInventoryByName() 上传到供应器槽位 " + i);
                                         break;
                                     }
                                 }
@@ -149,7 +255,7 @@ public class UploadPatternPacket implements IMessage {
                         }
                     }
                 } catch (Exception e) {
-                    System.out.println("[上传样板] getInventoryByName() 方法调用失败: " + e.getMessage());
+                    // 忽略异常，继续尝试其他方法
                 }
                 
                 // 备选方案：尝试 IItemHandler 接口（Forge 的现代库存系统）
@@ -167,7 +273,6 @@ public class UploadPatternPacket implements IMessage {
                                 copy.setCount(1);
                                 providerInv.setStackInSlot(i, copy);
                                 uploadSuccess = true;
-                                System.out.println("[上传样板] 样板已通过 IItemHandlerModifiable 上传到供应器");
                                 break;
                             }
                         }
@@ -177,14 +282,10 @@ public class UploadPatternPacket implements IMessage {
                 if (uploadSuccess) {
                     // 清空编码终端的输出槽位
                     patternInventory.extractItem(1, 1, false);
-                    System.out.println("[上传样板] 样板上传成功，编码终端已清空");
                     return null;
                 }
                 
-                System.err.println("[上传样板] 无法上传样板：找不到合适的库存接口或库存已满");
-                
             } catch (Throwable t) {
-                System.err.println("[上传样板] 上传失败: " + t.getMessage());
                 t.printStackTrace();
                 return null;
             }
@@ -193,3 +294,4 @@ public class UploadPatternPacket implements IMessage {
         }
     }
 }
+

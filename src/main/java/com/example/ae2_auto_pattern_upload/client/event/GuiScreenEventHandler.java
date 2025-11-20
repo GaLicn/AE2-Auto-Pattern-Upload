@@ -20,6 +20,16 @@ public class GuiScreenEventHandler {
 
     private static GuiButton uploadBtn = null;
 
+    /**
+     * 检查给定的GUI类名是否是样板终端
+     */
+    private static boolean isPatternTerminalGui(String guiClassName) {
+        return guiClassName.equals("GuiPatternTerm")                    // 普通样板终端
+                || guiClassName.equals("GuiExpandedProcessingPatternTerm")  // 增广样板终端
+                || guiClassName.equals("GuiWirelessPatternTerminal")        // 无线样板终端
+                || guiClassName.contains("PatternTerminal");                // 兼容其他可能的变体
+    }
+
     @SubscribeEvent
     public static void onGuiOpen(GuiScreenEvent.InitGuiEvent.Post event) {
         GuiScreen gui = event.getGui();
@@ -29,7 +39,7 @@ public class GuiScreenEventHandler {
         }
         // 检查是否是样板终端 GUI（使用类名检查避免编译时依赖）
         String guiClassName = gui.getClass().getSimpleName();
-        if (!guiClassName.equals("GuiPatternTerm")) {
+        if (!isPatternTerminalGui(guiClassName)) {
             uploadBtn = null;
             return;
         }
@@ -59,15 +69,14 @@ public class GuiScreenEventHandler {
             gui.buttonList.add(uploadBtn);
 
         } catch (Exception e) {
-            System.err.println("[上传按钮] 添加失败: " + e.getMessage());
             e.printStackTrace();
         }
     }
     
     @SubscribeEvent
     public static void onGuiButtonClick(GuiScreenEvent.ActionPerformedEvent.Pre event) {
-        // 检查是否点击了上传按钮
-        if (uploadBtn != null && event.getButton() == uploadBtn) {
+        // 检查是否点击了上传按钮（使用按钮ID进行比较，更可靠）
+        if (uploadBtn != null && event.getButton().id == 999) {
             // 发送请求供应器列表的包
             ModNetwork.CHANNEL.sendToServer(new RequestProvidersListPacket());
             event.setCanceled(true);

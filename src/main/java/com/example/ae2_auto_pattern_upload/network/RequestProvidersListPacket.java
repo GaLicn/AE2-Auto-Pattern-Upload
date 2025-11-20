@@ -31,7 +31,9 @@ public class RequestProvidersListPacket implements IMessage {
         @Override
         public IMessage onMessage(RequestProvidersListPacket message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().player;
-            if (player == null) return null;
+            if (player == null) {
+                return null;
+            }
             
             // 检查玩家是否打开编码终端
             if (!(player.openContainer instanceof ContainerPatternEncoder)) {
@@ -47,11 +49,62 @@ public class RequestProvidersListPacket implements IMessage {
                 java.util.List<Integer> slots = new java.util.ArrayList<>();
                 
                 // 获取网络节点
-                IGridNode node = container.getPart().getGridNode();
-                if (node == null) return null;
+                // 对于普通终端，通过 getPart() 获取；对于无线终端，通过 iGuiItemObject 获取
+                IGridNode node = null;
+                
+                // 尝试通过 getPart() 获取（普通样板终端）
+                try {
+                    java.lang.reflect.Method getPartMethod = container.getClass().getMethod("getPart");
+                    Object part = getPartMethod.invoke(container);
+                    if (part != null) {
+                        java.lang.reflect.Method getGridNodeMethod = part.getClass().getMethod("getGridNode", 
+                            appeng.api.util.AEPartLocation.class);
+                        node = (IGridNode) getGridNodeMethod.invoke(part, 
+                            appeng.api.util.AEPartLocation.INTERNAL);
+                    }
+                } catch (Exception e) {
+                    //null
+                }
+                
+                // 如果 getPart() 方式失败，尝试通过无线终端字段获取（无线样板终端）
+                if (node == null) {
+                    try {
+                        // 首先尝试无线终端专用字段 wirelessTerminalGUIObject
+                        java.lang.reflect.Field wirelessTerminalField = null;
+                        try {
+                            wirelessTerminalField = container.getClass().getDeclaredField("wirelessTerminalGUIObject");
+                        } catch (NoSuchFieldException e) {
+                            // 如果找不到 wirelessTerminalGUIObject，尝试父类的 iGuiItemObject
+                            try {
+                                wirelessTerminalField = container.getClass().getSuperclass().getDeclaredField("iGuiItemObject");
+                            } catch (NoSuchFieldException e2) {
+                                // 继续尝试直接在当前类查找 iGuiItemObject
+                                wirelessTerminalField = container.getClass().getDeclaredField("iGuiItemObject");
+                            }
+                        }
+                        
+                        if (wirelessTerminalField != null) {
+                            wirelessTerminalField.setAccessible(true);
+                            Object wirelessTerminal = wirelessTerminalField.get(container);
+                            
+                            if (wirelessTerminal != null && wirelessTerminal instanceof appeng.api.networking.security.IActionHost) {
+                                appeng.api.networking.security.IActionHost actionHost = (appeng.api.networking.security.IActionHost) wirelessTerminal;
+                                node = actionHost.getActionableNode();
+                            }
+                        }
+                    } catch (Exception e) {
+                        // 忽略异常，继续执行
+                    }
+                }
+                
+                if (node == null) {
+                    return null;
+                }
                 
                 IGrid grid = node.getGrid();
-                if (grid == null) return null;
+                if (grid == null) {
+                    return null;
+                }
                 
                 // 遍历网络中的所有供应器（ICraftingProvider）
                 for (Class<? extends IGridHost> hostClass : grid.getMachinesClasses()) {
