@@ -5,7 +5,6 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.crafting.ICraftingProvider;
-import appeng.container.implementations.ContainerPatternEncoder;
 import io.netty.buffer.ByteBuf;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
@@ -46,19 +45,21 @@ public class UploadPatternPacket implements IMessage {
                 return null;
             }
             
-            // 检查玩家是否打开编码终端
-            if (!(player.openContainer instanceof ContainerPatternEncoder)) {
+            // 不再强制要求必须是 AE2 原版的 ContainerPatternEncoder，
+            // 只要是打开了一个容器，就尝试按 AE2/拓展模组的惯例去反射获取 pattern 槽与网络节点。
+            // 这样可以兼容 AE2FluidCraft 的有线/无线流体样板终端等自定义容器。
+            if (player.openContainer == null) {
                 return null;
             }
-            
-            ContainerPatternEncoder container = (ContainerPatternEncoder) player.openContainer;
+
+            Object container = player.openContainer;
             
             try {
                 // 获取已编码槽位的样板
                 // 对于普通终端，通过 getPart() 获取；对于无线终端，通过 iGuiItemObject 获取
                 net.minecraftforge.items.IItemHandler patternInventory = null;
                 
-                // 尝试通过 getPart() 获取（普通样板终端）
+                // 尝试通过 getPart() 获取（普通样板终端 / 流体样板终端等基于 Part 的实现）
                 try {
                     java.lang.reflect.Method getPartMethod = container.getClass().getMethod("getPart");
                     Object part = getPartMethod.invoke(container);
@@ -76,7 +77,7 @@ public class UploadPatternPacket implements IMessage {
                 // 如果 getPart() 方式失败，尝试通过无线终端字段获取（无线样板终端）
                 if (patternInventory == null) {
                     try {
-                        // 对于无线终端，pattern 是容器自己的字段
+                        // 对于部分无线终端，pattern 可能是容器自己的字段
                         java.lang.reflect.Field patternField = container.getClass().getDeclaredField("pattern");
                         patternField.setAccessible(true);
                         Object patternObj = patternField.get(container);
@@ -135,7 +136,7 @@ public class UploadPatternPacket implements IMessage {
                 // 对于普通终端，通过 getPart() 获取；对于无线终端，通过 iGuiItemObject 获取
                 IGridNode node = null;
                 
-                // 尝试通过 getPart() 获取（普通样板终端）
+                // 尝试通过 getPart() 获取（普通样板终端 / 流体样板终端等基于 Part 的实现）
                 try {
                     java.lang.reflect.Method getPartMethod = container.getClass().getMethod("getPart");
                     Object part = getPartMethod.invoke(container);
