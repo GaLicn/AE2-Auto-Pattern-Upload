@@ -4,7 +4,6 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.crafting.ICraftingProvider;
-import appeng.container.implementations.ContainerPatternEncoder;
 import io.netty.buffer.ByteBuf;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
@@ -34,13 +33,12 @@ public class RequestProvidersListPacket implements IMessage {
             if (player == null) {
                 return null;
             }
-            
-            // 检查玩家是否打开编码终端
-            if (!(player.openContainer instanceof ContainerPatternEncoder)) {
+
+            if (player.openContainer == null) {
                 return null;
             }
-            
-            ContainerPatternEncoder container = (ContainerPatternEncoder) player.openContainer;
+
+            Object container = player.openContainer;
             
             try {
                 // 获取网络中的供应器列表
@@ -52,7 +50,7 @@ public class RequestProvidersListPacket implements IMessage {
                 // 对于普通终端，通过 getPart() 获取；对于无线终端，通过 iGuiItemObject 获取
                 IGridNode node = null;
                 
-                // 尝试通过 getPart() 获取（普通样板终端）
+                // 尝试通过 getPart() 获取（普通样板终端 / 流体样板终端等基于 Part 的实现）
                 try {
                     java.lang.reflect.Method getPartMethod = container.getClass().getMethod("getPart");
                     Object part = getPartMethod.invoke(container);
