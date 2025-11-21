@@ -56,64 +56,95 @@ public class UploadPatternPacket implements IMessage {
             
             try {
                 // 获取已编码槽位的样板
-                // 对于普通终端，通过 getPart() 获取；对于无线终端，通过 iGuiItemObject 获取
+                // 对于普通终端，通过 getPart() 获取；对于无线终端，通过 iGuiItemObject 或容器自身的 getInventoryByName 获取
                 net.minecraftforge.items.IItemHandler patternInventory = null;
-                
-                // 尝试通过 getPart() 获取（普通样板终端 / 流体样板终端等基于 Part 的实现）
+
+                // 1) 优先尝试：直接在容器上调用 getInventoryByName("pattern")
+                //    兼容 AE2 原版 ContainerPatternEncoder / ContainerPatternTerm
+                //    以及 AE2FluidCraft 的 ContainerWirelessFluidPatternTerminal 等自定义容器
                 try {
-                    java.lang.reflect.Method getPartMethod = container.getClass().getMethod("getPart");
-                    Object part = getPartMethod.invoke(container);
-                    if (part != null) {
-                        java.lang.reflect.Method getInventoryByNameMethod = part.getClass().getMethod("getInventoryByName", String.class);
-                        Object inv = getInventoryByNameMethod.invoke(part, "pattern");
-                        if (inv instanceof net.minecraftforge.items.IItemHandler) {
-                            patternInventory = (net.minecraftforge.items.IItemHandler) inv;
-                        }
+                    java.lang.reflect.Method getInventoryByNameMethod =
+                            container.getClass().getMethod("getInventoryByName", String.class);
+                    Object inv = getInventoryByNameMethod.invoke(container, "pattern");
+                    if (inv instanceof net.minecraftforge.items.IItemHandler) {
+                        patternInventory = (net.minecraftforge.items.IItemHandler) inv;
                     }
-                } catch (Exception e) {
-                    // null
+                } catch (Exception ignored) {
+                    // 容器上没有该方法或调用失败，继续尝试其他路径
                 }
-                
-                // 如果 getPart() 方式失败，尝试通过无线终端字段获取（无线样板终端）
+
+                // 2) 尝试通过 getPart() 获取（普通样板终端 / 流体样板终端等基于 Part 的实现）
                 if (patternInventory == null) {
                     try {
-                        // 对于部分无线终端，pattern 可能是容器自己的字段
-                        java.lang.reflect.Field patternField = container.getClass().getDeclaredField("pattern");
-                        patternField.setAccessible(true);
-                        Object patternObj = patternField.get(container);
-                        if (patternObj instanceof net.minecraftforge.items.IItemHandler) {
-                            patternInventory = (net.minecraftforge.items.IItemHandler) patternObj;
+                        java.lang.reflect.Method getPartMethod = container.getClass().getMethod("getPart");
+                        Object part = getPartMethod.invoke(container);
+                        if (part != null) {
+                            java.lang.reflect.Method getInventoryByNameMethod = part.getClass().getMethod("getInventoryByName", String.class);
+                            Object inv = getInventoryByNameMethod.invoke(part, "pattern");
+                            if (inv instanceof net.minecraftforge.items.IItemHandler) {
+                                patternInventory = (net.minecraftforge.items.IItemHandler) inv;
+                            }
                         }
-                    } catch (NoSuchFieldException e) {
+                    } catch (Exception ignored) {
+                        // getPart 不存在或调用失败，继续尝试其他路径
+                    }
+                }
+
+                // 3) 如果以上方式失败，尝试通过容器 / 无线终端字段获取（无线样板终端及其子类，比如无线流体样板终端）
+                if (patternInventory == null) {
+                    try {
+                        // 3.1 在类继承链中查找名为 "pattern" 的字段（例如 ContainerWirelessPatternTerminal 里就有）
+                        Class<?> cls = container.getClass();
+                        java.lang.reflect.Field patternField = null;
+                        while (cls != null && patternField == null) {
+                            try {
+                                patternField = cls.getDeclaredField("pattern");
+                            } catch (NoSuchFieldException ignoredInner) {
+                                cls = cls.getSuperclass();
+                            }
+                        }
+                        if (patternField != null) {
+                            patternField.setAccessible(true);
+                            Object patternObj = patternField.get(container);
+                            if (patternObj instanceof net.minecraftforge.items.IItemHandler) {
+                                patternInventory = (net.minecraftforge.items.IItemHandler) patternObj;
+                            }
+                        }
+                    } catch (Exception e) {
                         // 如果找不到 pattern 字段，尝试通过无线终端对象的 getInventoryByName 获取
                         try {
+                            // 3.2 在类继承链中查找 "wirelessTerminalGUIObject" 或 "iGuiItemObject"
+                            Class<?> cls = container.getClass();
                             java.lang.reflect.Field wirelessTerminalField = null;
-                            try {
-                                wirelessTerminalField = container.getClass().getDeclaredField("wirelessTerminalGUIObject");
-                            } catch (NoSuchFieldException e2) {
+                            while (cls != null && wirelessTerminalField == null) {
                                 try {
-                                    wirelessTerminalField = container.getClass().getSuperclass().getDeclaredField("iGuiItemObject");
-                                } catch (NoSuchFieldException e3) {
-                                    wirelessTerminalField = container.getClass().getDeclaredField("iGuiItemObject");
+                                    // 先尝试无线专用字段
+                                    wirelessTerminalField = cls.getDeclaredField("wirelessTerminalGUIObject");
+                                } catch (NoSuchFieldException e2) {
+                                    try {
+                                        // 再尝试通用的 iGuiItemObject
+                                        wirelessTerminalField = cls.getDeclaredField("iGuiItemObject");
+                                    } catch (NoSuchFieldException ignoredInner) {
+                                        cls = cls.getSuperclass();
+                                    }
                                 }
                             }
-                            
+
                             if (wirelessTerminalField != null) {
                                 wirelessTerminalField.setAccessible(true);
                                 Object wirelessTerminal = wirelessTerminalField.get(container);
                                 if (wirelessTerminal != null) {
-                                    java.lang.reflect.Method getInventoryByNameMethod = wirelessTerminal.getClass().getMethod("getInventoryByName", String.class);
+                                    java.lang.reflect.Method getInventoryByNameMethod = wirelessTerminal.getClass()
+                                            .getMethod("getInventoryByName", String.class);
                                     Object inv = getInventoryByNameMethod.invoke(wirelessTerminal, "pattern");
                                     if (inv instanceof net.minecraftforge.items.IItemHandler) {
                                         patternInventory = (net.minecraftforge.items.IItemHandler) inv;
                                     }
                                 }
                             }
-                        } catch (Exception e2) {
+                        } catch (Exception ignored) {
                             // 忽略异常，继续执行
                         }
-                    } catch (Exception e) {
-                        // 忽略异常，继续执行
                     }
                 }
                 
