@@ -10,8 +10,8 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 
 /**
  * C2S: 上传编码样板到指定供应器
@@ -159,7 +159,7 @@ public class UploadPatternPacket implements IMessage {
                 }
                 
                 // 检查是否是有效的编码样板
-                if (!AEApi.instance().definitions().items().encodedPattern().isSameAs(encodedPattern)) {
+                if (!isSupportedPattern(encodedPattern)) {
                     return null;
                 }
                 
@@ -323,6 +323,26 @@ public class UploadPatternPacket implements IMessage {
             }
             
             return null;
+        }
+
+        private static final ResourceLocation AE2FC_DENSE_PATTERN_ID =
+                new ResourceLocation("ae2fc", "dense_encoded_pattern");
+
+        private static boolean isSupportedPattern(ItemStack stack) {
+            if (stack == null || stack.isEmpty()) {
+                return false;
+            }
+
+            if (AEApi.instance().definitions().items().encodedPattern().isSameAs(stack)) {
+                return true;
+            }
+
+            return isAe2fcDensePattern(stack);
+        }
+
+        private static boolean isAe2fcDensePattern(ItemStack stack) {
+            ResourceLocation registryName = stack.getItem().getRegistryName();
+            return registryName != null && AE2FC_DENSE_PATTERN_ID.equals(registryName);
         }
     }
 }
