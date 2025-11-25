@@ -10,6 +10,7 @@ import net.minecraft.item.ItemStack;
 import com.glodblock.github.client.gui.container.ContainerFluidPatternTerminal;
 import com.glodblock.github.client.gui.container.ContainerFluidPatternTerminalEx;
 import com.glodblock.github.client.gui.container.base.FCContainerEncodeTerminal;
+import com.glodblock.github.common.item.ItemFluidEncodedPattern;
 import com.glodblock.github.inventory.item.IItemPatternTerminal;
 
 import appeng.api.AEApi;
@@ -74,11 +75,7 @@ public class UploadPatternPacket implements IMessage {
                 return null;
             }
 
-            if (!AEApi.instance()
-                .definitions()
-                .items()
-                .encodedPattern()
-                .isSameAs(encodedPattern)) {
+            if (!isSupportedPattern(encodedPattern)) {
                 return null;
             }
 
@@ -109,6 +106,20 @@ public class UploadPatternPacket implements IMessage {
             }
 
             return null;
+        }
+
+        private boolean isSupportedPattern(ItemStack stack) {
+            if (stack == null) {
+                return false;
+            }
+            if (AEApi.instance()
+                .definitions()
+                .items()
+                .encodedPattern()
+                .isSameAs(stack)) {
+                return true;
+            }
+            return stack.getItem() instanceof ItemFluidEncodedPattern;
         }
 
         private IActionHost resolveTerminal(Container container) {
