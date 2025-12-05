@@ -3,6 +3,7 @@ package com.gali.ae2_auto_pattern_upload.network;
 import java.util.ArrayList;
 import java.util.List;
 
+import appeng.parts.AEBasePart;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
@@ -151,6 +152,11 @@ public class RequestProvidersListPacket implements IMessage {
                         }
                     } catch (Throwable ignored) {}
                 }
+            }
+            if(machine instanceof AEBasePart part){
+                try {
+                    name = part.getCustomName();
+                }catch (Throwable ignored){}
             }
             return name;
         }
