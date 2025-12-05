@@ -40,10 +40,7 @@ public class ProvidersListS2CPacket implements IMessage {
 
         for (int i = 0; i < size; i++) {
             ids.add(buf.readLong());
-            int len = buf.readInt();
-            byte[] nameBytes = new byte[len];
-            buf.readBytes(nameBytes);
-            names.add(new String(nameBytes, java.nio.charset.StandardCharsets.UTF_8));
+            names.add(readString(buf));
             emptySlots.add(buf.readInt());
         }
     }
@@ -53,12 +50,22 @@ public class ProvidersListS2CPacket implements IMessage {
         buf.writeInt(ids.size());
         for (int i = 0; i < ids.size(); i++) {
             buf.writeLong(ids.get(i));
-            byte[] nameBytes = names.get(i)
-                .getBytes(java.nio.charset.StandardCharsets.UTF_8);
-            buf.writeInt(nameBytes.length);
-            buf.writeBytes(nameBytes);
+            writeString(buf, names.get(i));
             buf.writeInt(emptySlots.get(i));
         }
+    }
+
+    private void writeString(ByteBuf buf, String str) {
+        byte[] bytes = str.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        buf.writeShort(bytes.length);
+        buf.writeBytes(bytes);
+    }
+
+    private String readString(ByteBuf buf) {
+        int len = buf.readShort();
+        byte[] bytes = new byte[len];
+        buf.readBytes(bytes);
+        return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
     }
 
     public static class Handler implements IMessageHandler<ProvidersListS2CPacket, IMessage> {

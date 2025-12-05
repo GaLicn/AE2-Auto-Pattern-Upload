@@ -6,7 +6,7 @@ import cpw.mods.fml.relauncher.Side;
 
 public final class ModNetwork {
 
-    public static final String CHANNEL_ID = "ae2_auto_pattern_upload";
+    public static final String CHANNEL_ID = "ae2apu";
     public static final SimpleNetworkWrapper CHANNEL = NetworkRegistry.INSTANCE.newSimpleChannel(CHANNEL_ID);
 
     private static int discriminator = 0;
