@@ -171,7 +171,7 @@ public class RecipeNameUtil {
                 }
             }
         } catch (IOException e) {
-            System.err.println("[AE2 Auto Pattern Upload] " + net.minecraft.client.resources.I18n.format("ae2_auto_pattern_upload.error.read_mappings", e.getMessage()));
+            System.err.println("[AE2 Auto Pattern Upload] Failed to read mappings: " + e.getMessage());
         }
     }
 
@@ -190,7 +190,7 @@ public class RecipeNameUtil {
                 writer.write(json);
             }
         } catch (IOException e) {
-            System.err.println("[AE2 Auto Pattern Upload] " + net.minecraft.client.resources.I18n.format("ae2_auto_pattern_upload.error.create_template", e.getMessage()));
+            System.err.println("[AE2 Auto Pattern Upload] Failed to create template: " + e.getMessage());
         }
     }
 
@@ -209,7 +209,7 @@ public class RecipeNameUtil {
                 writer.write(json);
             }
         } catch (IOException e) {
-            System.err.println("[AE2 Auto Pattern Upload] " + net.minecraft.client.resources.I18n.format("ae2_auto_pattern_upload.error.write_mappings", e.getMessage()));
+            System.err.println("[AE2 Auto Pattern Upload] Failed to write mappings: " + e.getMessage());
         }
     }
 
