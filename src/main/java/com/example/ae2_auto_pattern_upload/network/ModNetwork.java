@@ -9,7 +9,7 @@ import net.minecraftforge.fml.relauncher.Side;
  */
 public class ModNetwork {
     public static final SimpleNetworkWrapper CHANNEL = 
-        NetworkRegistry.INSTANCE.newSimpleChannel("ae2_auto_pattern_upload");
+        NetworkRegistry.INSTANCE.newSimpleChannel("apu");
     
     private static int packetId = 0;
     
