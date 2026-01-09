@@ -3,7 +3,6 @@ package com.gali.ae2_auto_pattern_upload.network;
 import java.util.ArrayList;
 import java.util.List;
 
-import appeng.parts.AEBasePart;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
@@ -21,6 +20,7 @@ import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.security.IActionHost;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
+import appeng.parts.AEBasePart;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -153,10 +153,10 @@ public class RequestProvidersListPacket implements IMessage {
                     } catch (Throwable ignored) {}
                 }
             }
-            if(machine instanceof AEBasePart part){
+            if (machine instanceof AEBasePart part) {
                 try {
                     name = part.getCustomName();
-                }catch (Throwable ignored){}
+                } catch (Throwable ignored) {}
             }
             return name;
         }

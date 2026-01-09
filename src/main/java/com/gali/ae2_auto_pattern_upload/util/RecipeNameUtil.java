@@ -42,6 +42,7 @@ public final class RecipeNameUtil {
     private static final Pattern CAMEL_CASE_SPLITTER = Pattern.compile("(?<!^)([A-Z])");
 
     private static String lastRecipeName = null;
+    private static String lastRawRecipeId = null;
 
     static {
         Path configDir = Loader.instance()
@@ -58,12 +59,21 @@ public final class RecipeNameUtil {
         lastRecipeName = name;
     }
 
+    public static synchronized void setLastRawRecipeId(String rawId) {
+        lastRawRecipeId = rawId;
+    }
+
     public static synchronized String getLastRecipeName() {
         return lastRecipeName;
     }
 
+    public static synchronized String getLastRawRecipeId() {
+        return lastRawRecipeId;
+    }
+
     public static synchronized void clearLastRecipeName() {
         lastRecipeName = null;
+        lastRawRecipeId = null;
     }
 
     public static synchronized boolean addOrUpdateMapping(String key, String value) {
@@ -263,6 +273,24 @@ public final class RecipeNameUtil {
     }
 
     public static void captureFromRecipeHandler(IRecipeHandler handler) {
+        if (handler == null) {
+            return;
+        }
+        // 保存原始的配方标识符（用于添加映射）
+        String rawId = safeOverlayIdentifier(handler);
+        if (rawId != null && !rawId.isEmpty()) {
+            setLastRawRecipeId(rawId);
+        } else {
+            try {
+                String recipeName = handler.getRecipeName();
+                if (recipeName != null && !recipeName.trim()
+                    .isEmpty()) {
+                    setLastRawRecipeId(recipeName.trim());
+                }
+            } catch (Throwable ignored) {}
+        }
+
+        // 保存映射后的显示名称（用于搜索）
         String keyword = mapRecipeHandlerToSearchKey(handler);
         if (keyword != null && !keyword.isEmpty()) {
             setLastRecipeName(keyword);
@@ -333,8 +361,16 @@ public final class RecipeNameUtil {
     }
 
     private static String normalizeKey(String key) {
-        return key.trim()
-            .toLowerCase(Locale.ROOT);
+        // 统一把 . _ - : 都替换成空格，然后合并多余空格
+        String normalized = key.trim()
+            .toLowerCase(Locale.ROOT)
+            .replace('.', ' ')
+            .replace('_', ' ')
+            .replace('-', ' ')
+            .replace(':', ' ')
+            .replaceAll("\\s+", " ")
+            .trim();
+        return normalized;
     }
 
     private static String toDisplayString(String raw) {

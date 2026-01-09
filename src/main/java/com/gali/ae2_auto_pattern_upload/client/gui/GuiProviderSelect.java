@@ -44,6 +44,7 @@ public class GuiProviderSelect extends GuiScreen {
     private int page = 0;
     private boolean needsRefresh = false;
     private String lastAddedMappingName = null;
+    private String lastRawRecipeId = null;
 
     private static class GroupEntry {
 
@@ -67,8 +68,12 @@ public class GuiProviderSelect extends GuiScreen {
         String recent = RecipeNameUtil.getLastRecipeName();
         if (recent != null && !recent.isEmpty()) {
             this.query = recent;
-            RecipeNameUtil.clearLastRecipeName();
         }
+        String rawId = RecipeNameUtil.getLastRawRecipeId();
+        if (rawId != null && !rawId.isEmpty()) {
+            this.lastRawRecipeId = rawId;
+        }
+        RecipeNameUtil.clearLastRecipeName();
 
         buildGroups();
         applyFilter();
@@ -267,7 +272,9 @@ public class GuiProviderSelect extends GuiScreen {
     }
 
     private void addMappingFromUI() {
-        String key = query == null ? "" : query.trim();
+        // 优先使用原始配方ID作为key，如果没有则使用搜索框内容
+        String key = (lastRawRecipeId != null && !lastRawRecipeId.isEmpty()) ? lastRawRecipeId
+            : (query == null ? "" : query.trim());
         String value = mappingField == null ? ""
             : mappingField.getText()
                 .trim();
@@ -282,6 +289,10 @@ public class GuiProviderSelect extends GuiScreen {
         if (RecipeNameUtil.addOrUpdateMapping(key, value)) {
             sendClientMessage(String.format(translate("ae2_auto_pattern_upload.info.mapping_added"), key, value));
             lastAddedMappingName = value;
+            query = value; // 更新搜索框显示为新的映射名
+            if (searchBox != null) {
+                searchBox.setText(value);
+            }
             RecipeNameUtil.reloadMappings();
             applyFilter();
             needsRefresh = true;
