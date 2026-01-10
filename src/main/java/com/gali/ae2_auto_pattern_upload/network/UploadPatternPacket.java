@@ -192,13 +192,19 @@ public class UploadPatternPacket implements IMessage {
         }
 
         private boolean insertPatternIntoProvider(ICraftingProvider provider, ItemStack pattern) {
-            // 优先处理接口（IInterfaceHost），确保插入到编码样板槽（patterns）
+            // 优先处理接口（IInterfaceHost），确保只插入到编码样板槽（patterns）
             if (provider instanceof IInterfaceHost host) {
                 IInventory patterns = host.getPatterns();
-                if (patterns != null && insertIntoPatternInventory(patterns, pattern)) {
-                    host.saveChanges();
-                    return true;
+                if (patterns != null) {
+                    // 计算实际可用的槽位数量（基于升级卡）
+                    int availableSlots = host.rows() * host.rowSize();
+                    if (insertIntoPatternInventory(patterns, pattern, availableSlots)) {
+                        host.saveChanges();
+                        return true;
+                    }
                 }
+                // 接口的样板槽满了，直接返回 false，不要尝试放到物品槽
+                return false;
             }
 
             if (provider instanceof IInventory inventory) {
@@ -212,12 +218,13 @@ public class UploadPatternPacket implements IMessage {
          * 将样板插入到编码样板槽（patterns）中
          * 确保只插入到允许放置编码样板的槽位
          */
-        private boolean insertIntoPatternInventory(IInventory patterns, ItemStack pattern) {
+        private boolean insertIntoPatternInventory(IInventory patterns, ItemStack pattern, int maxSlots) {
             if (patterns == null) {
                 return false;
             }
 
-            for (int i = 0; i < patterns.getSizeInventory(); i++) {
+            int limit = Math.min(maxSlots, patterns.getSizeInventory());
+            for (int i = 0; i < limit; i++) {
                 ItemStack slot = patterns.getStackInSlot(i);
                 if (slot == null || slot.stackSize <= 0) {
                     // 检查该槽位是否允许放置编码样板

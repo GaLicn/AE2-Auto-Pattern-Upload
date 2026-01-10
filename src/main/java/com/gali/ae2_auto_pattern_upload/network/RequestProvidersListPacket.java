@@ -6,6 +6,7 @@ import java.util.List;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 
 import com.glodblock.github.client.gui.container.ContainerFluidPatternTerminal;
@@ -20,6 +21,7 @@ import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.security.IActionHost;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
+import appeng.helpers.IInterfaceHost;
 import appeng.parts.AEBasePart;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -132,6 +134,32 @@ public class RequestProvidersListPacket implements IMessage {
         }
 
         private int estimateEmptySlots(ICraftingProvider provider) {
+            if (provider instanceof IInterfaceHost host) {
+                IInventory patterns = host.getPatterns();
+                if (patterns != null) {
+                    // 计算实际可用的槽位数量（基于升级卡）
+                    int availableSlots = host.rows() * host.rowSize();
+                    int limit = Math.min(availableSlots, patterns.getSizeInventory());
+                    int empty = 0;
+                    for (int i = 0; i < limit; i++) {
+                        ItemStack slot = patterns.getStackInSlot(i);
+                        if (slot == null || slot.stackSize <= 0) {
+                            empty++;
+                        }
+                    }
+                    return empty;
+                }
+            }
+            if (provider instanceof IInventory inv) {
+                int empty = 0;
+                for (int i = 0; i < inv.getSizeInventory(); i++) {
+                    ItemStack slot = inv.getStackInSlot(i);
+                    if (slot == null || slot.stackSize <= 0) {
+                        empty++;
+                    }
+                }
+                return empty;
+            }
             return 0;
         }
 
