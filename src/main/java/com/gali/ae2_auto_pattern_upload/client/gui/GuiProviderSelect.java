@@ -157,6 +157,10 @@ public class GuiProviderSelect extends GuiScreen {
                 240,
                 20,
                 label);
+            // 如果没有空槽位，禁用按钮（变灰）
+            if (entry.totalSlots <= 0) {
+                button.enabled = false;
+            }
             this.buttonList.add(button);
         }
         GuiButton prevBtn = new GuiButton(BUTTON_PREV, centerX - 60, navY, 20, 20, "<");
@@ -196,7 +200,7 @@ public class GuiProviderSelect extends GuiScreen {
     }
 
     private String buildLabel(GroupEntry entry) {
-        return entry.name + " (" + entry.totalSlots + ") x" + entry.count;
+        return entry.name + " x" + entry.count + " - (" + entry.totalSlots + ")";
     }
 
     @Override

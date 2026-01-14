@@ -91,7 +91,8 @@ public class KeyInputHandler implements IContainerInputHandler {
         if (gui == null) {
             return false;
         }
-        String className = gui.getClass().getName();
+        String className = gui.getClass()
+            .getName();
         return className.startsWith("appeng.") || className.startsWith("com.glodblock.");
     }
 
@@ -101,9 +102,12 @@ public class KeyInputHandler implements IContainerInputHandler {
         while (clazz != null && clazz != Object.class) {
             for (Field field : clazz.getDeclaredFields()) {
                 try {
-                    String fieldName = field.getName().toLowerCase();
+                    String fieldName = field.getName()
+                        .toLowerCase();
                     // 查找名称包含 search 且类型包含 TextField 的字段
-                    if (fieldName.contains("search") && field.getType().getName().contains("TextField")) {
+                    if (fieldName.contains("search") && field.getType()
+                        .getName()
+                        .contains("TextField")) {
                         field.setAccessible(true);
                         Object value = field.get(gui);
                         if (value != null) {
@@ -123,7 +127,8 @@ public class KeyInputHandler implements IContainerInputHandler {
             if (searchField instanceof GuiTextField) {
                 return ((GuiTextField) searchField).isFocused();
             }
-            Method isFocused = searchField.getClass().getMethod("isFocused");
+            Method isFocused = searchField.getClass()
+                .getMethod("isFocused");
             return (Boolean) isFocused.invoke(searchField);
         } catch (Throwable ignored) {}
         return false;
@@ -135,7 +140,8 @@ public class KeyInputHandler implements IContainerInputHandler {
                 ((GuiTextField) searchField).setText(text);
                 return true;
             }
-            Method setText = searchField.getClass().getMethod("setText", String.class);
+            Method setText = searchField.getClass()
+                .getMethod("setText", String.class);
             setText.invoke(searchField, text);
             return true;
         } catch (Throwable ignored) {}
