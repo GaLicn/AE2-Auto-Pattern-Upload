@@ -33,8 +33,9 @@ public class BlockLabeledWirelessTransceiver extends AEBaseTileBlock {
     public BlockLabeledWirelessTransceiver() {
         super(Material.iron);
         setBlockName("labeledWirelessTransceiver");
-        setHardness(2.0F);
+        setHardness(1.5F); // 与石头一致的硬度
         setResistance(10.0F);
+        setHarvestLevel("pickaxe", 0); // 需要镐子挖掘，木镐即可
         setTileEntity(TileLabeledWirelessTransceiver.class);
     }
 
@@ -104,5 +105,10 @@ public class BlockLabeledWirelessTransceiver extends AEBaseTileBlock {
     public int getLightValue(IBlockAccess world, int x, int y, int z) {
         int meta = world.getBlockMetadata(x, y, z);
         return meta == 1 ? 8 : 0;
+    }
+
+    @Override
+    public int quantityDropped(int meta, int fortune, java.util.Random random) {
+        return 1; // 掉落1个物品
     }
 }
