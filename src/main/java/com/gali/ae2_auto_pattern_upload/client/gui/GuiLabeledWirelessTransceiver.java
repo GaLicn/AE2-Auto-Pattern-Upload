@@ -3,7 +3,6 @@ package com.gali.ae2_auto_pattern_upload.client.gui;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.gali.ae2_auto_pattern_upload.network.RequestLabelListPacket;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -17,6 +16,7 @@ import com.gali.ae2_auto_pattern_upload.MyMod;
 import com.gali.ae2_auto_pattern_upload.container.ContainerLabeledWirelessTransceiver;
 import com.gali.ae2_auto_pattern_upload.network.ModNetwork;
 import com.gali.ae2_auto_pattern_upload.network.PacketApplyLabel;
+import com.gali.ae2_auto_pattern_upload.network.RequestLabelListPacket;
 import com.gali.ae2_auto_pattern_upload.tile.TileLabeledWirelessTransceiver;
 
 /**
@@ -147,7 +147,8 @@ public class GuiLabeledWirelessTransceiver extends GuiContainer {
         if (button.id == 0) {
             // 新建 - 使用搜索框的文本
             String label = searchBox.getText();
-            if (label != null && !label.trim().isEmpty()) {
+            if (label != null && !label.trim()
+                .isEmpty()) {
                 sendApplyLabel(label.trim());
             }
         } else if (button.id == 1) {
@@ -268,7 +269,8 @@ public class GuiLabeledWirelessTransceiver extends GuiContainer {
     @Override
     protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.mc.getTextureManager().bindTexture(TEXTURE);
+        this.mc.getTextureManager()
+            .bindTexture(TEXTURE);
         int x = (width - xSize) / 2;
         int y = (height - ySize) / 2;
         this.drawTexturedModalRect(x, y, 0, 0, xSize, ySize);
@@ -377,11 +379,8 @@ public class GuiLabeledWirelessTransceiver extends GuiContainer {
         String freqLine = StatCollector.translateToLocal("gui.ae2_auto_pattern_upload.labeled_wireless.frequency")
             + ": "
             + (freq > 0 ? String.valueOf(freq) : "-");
-        fontRendererObj.drawString(
-            fontRendererObj.trimStringToWidth(freqLine, INFO_W - 4),
-            x + 2,
-            y + lineHeight * 3,
-            0x404040);
+        fontRendererObj
+            .drawString(fontRendererObj.trimStringToWidth(freqLine, INFO_W - 4), x + 2, y + lineHeight * 3, 0x404040);
     }
 
     @Override
@@ -394,12 +393,14 @@ public class GuiLabeledWirelessTransceiver extends GuiContainer {
         String query = searchBox.getText();
         filteredLabels.clear();
 
-        if (query == null || query.trim().isEmpty()) {
+        if (query == null || query.trim()
+            .isEmpty()) {
             filteredLabels.addAll(allLabels);
         } else {
             String lowerQuery = query.toLowerCase();
             for (LabelEntry entry : allLabels) {
-                if (entry.label.toLowerCase().contains(lowerQuery)) {
+                if (entry.label.toLowerCase()
+                    .contains(lowerQuery)) {
                     filteredLabels.add(entry);
                 }
             }

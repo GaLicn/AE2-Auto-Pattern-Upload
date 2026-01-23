@@ -198,11 +198,7 @@ public class LabelNetworkRegistry extends WorldSavedData {
             // 不过滤所有者，显示所有标签
             if (key.dim != Integer.MIN_VALUE && key.dim != dimId) continue;
             LabelNetwork network = entry.getValue();
-            list.add(
-                new LabelNetworkSnapshot(
-                    key.label,
-                    network.getChannel(),
-                    network.endpointCount())); // 添加在线数
+            list.add(new LabelNetworkSnapshot(key.label, network.getChannel(), network.endpointCount())); // 添加在线数
         }
         list.sort(Comparator.comparing(s -> s.label)); // 按标签名排序
         return list;

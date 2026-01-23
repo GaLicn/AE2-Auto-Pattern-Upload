@@ -41,10 +41,7 @@ public final class ModNetwork {
             RequestLabelListPacket.class,
             discriminator++,
             Side.SERVER);
-        channel.registerMessage(
-            LabelListS2CPacket.Handler.class,
-            LabelListS2CPacket.class,
-            discriminator++,
-            Side.CLIENT);
+        channel
+            .registerMessage(LabelListS2CPacket.Handler.class, LabelListS2CPacket.class, discriminator++, Side.CLIENT);
     }
 }

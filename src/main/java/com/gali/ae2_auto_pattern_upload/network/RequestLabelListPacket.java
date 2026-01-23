@@ -82,7 +82,7 @@ public class RequestLabelListPacket implements IMessage {
 
             String currentLabel = tile.getLabelForDisplay();
             long currentChannel = tile.getFrequency();
-            
+
             // 获取当前标签的在线数
             int currentOnlineCount = 0;
             if (currentLabel != null && !currentLabel.isEmpty()) {
