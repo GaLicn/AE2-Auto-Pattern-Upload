@@ -5,7 +5,8 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "ae2_auto_pattern_upload.refmap.json",
   "mixins": [
-    "PatternEncodingTermMenuAccessor"
+    "PatternEncodingTermMenuAccessor",
+    "jei.EncodePatternTransferHandlerMixin"
   ],
   "client": [
   ],

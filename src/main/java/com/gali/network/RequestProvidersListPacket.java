@@ -77,7 +77,8 @@ public class RequestProvidersListPacket {
                                 try {
                                     var group = container.getTerminalGroup();
                                     if (group != null) {
-                                        name = Component.Serializer.toJson(group.name());
+                                        // 直接获取翻译后的字符串
+                                        name = group.name().getString();
                                     }
                                 } catch (Exception ignored) {
                                 }
