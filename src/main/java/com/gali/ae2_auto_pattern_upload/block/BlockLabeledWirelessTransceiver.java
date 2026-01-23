@@ -24,6 +24,12 @@ import cpw.mods.fml.relauncher.SideOnly;
  */
 public class BlockLabeledWirelessTransceiver extends AEBaseTileBlock {
 
+    @SideOnly(Side.CLIENT)
+    private IIcon iconOff;
+    
+    @SideOnly(Side.CLIENT)
+    private IIcon iconOn;
+
     public BlockLabeledWirelessTransceiver() {
         super(Material.iron);
         setBlockName("labeledWirelessTransceiver");
@@ -40,14 +46,17 @@ public class BlockLabeledWirelessTransceiver extends AEBaseTileBlock {
     @Override
     @SideOnly(Side.CLIENT)
     public void registerBlockIcons(IIconRegister reg) {
-        // 暂时使用铁块纹理作为占位
-        blockIcon = Blocks.iron_block.getIcon(0, 0);
+        // 注册开关两种状态的纹理
+        iconOff = reg.registerIcon(MyMod.MODID + ":labeled_wireless_transceiver_off");
+        iconOn = reg.registerIcon(MyMod.MODID + ":labeled_wireless_transceiver_on");
+        blockIcon = iconOff;
     }
 
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIcon(int side, int meta) {
-        return blockIcon;
+        // meta 0 = 离线/关闭, meta 1 = 在线/开启
+        return meta == 1 ? iconOn : iconOff;
     }
 
     @Override
