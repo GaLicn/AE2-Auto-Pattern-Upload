@@ -14,3 +14,12 @@ ae2_auto_pattern_upload.info.mapping_not_found=未找到对应的映射。
 ae2_auto_pattern_upload.error.read_mappings=无法读取配方映射：%s
 ae2_auto_pattern_upload.error.create_template=无法创建默认映射模板：%s
 ae2_auto_pattern_upload.error.write_mappings=无法写入配方映射：%s
+
+# 标签无线收发器
+tile.labeledWirelessTransceiver.name=标签无线收发器
+gui.ae2_auto_pattern_upload.labeled_wireless.title=标签无线收发器
+gui.ae2_auto_pattern_upload.labeled_wireless.apply=应用
+gui.ae2_auto_pattern_upload.labeled_wireless.clear=清除
+gui.ae2_auto_pattern_upload.labeled_wireless.channel=频道: %d
+gui.ae2_auto_pattern_upload.labeled_wireless.not_connected=未连接
+gui.ae2_auto_pattern_upload.labeled_wireless.owner=所有者: %s

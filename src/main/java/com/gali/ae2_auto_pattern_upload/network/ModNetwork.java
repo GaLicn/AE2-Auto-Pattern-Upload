@@ -7,29 +7,32 @@ import cpw.mods.fml.relauncher.Side;
 public final class ModNetwork {
 
     public static final String CHANNEL_ID = "ae2apu";
-    public static final SimpleNetworkWrapper CHANNEL = NetworkRegistry.INSTANCE.newSimpleChannel(CHANNEL_ID);
+    public static final SimpleNetworkWrapper channel = NetworkRegistry.INSTANCE.newSimpleChannel(CHANNEL_ID);
 
     private static int discriminator = 0;
 
     private ModNetwork() {}
 
     public static void registerPackets() {
-        CHANNEL.registerMessage(
+        channel.registerMessage(
             RequestProvidersListPacket.Handler.class,
             RequestProvidersListPacket.class,
             discriminator++,
             Side.SERVER);
 
-        CHANNEL.registerMessage(
+        channel.registerMessage(
             ProvidersListS2CPacket.Handler.class,
             ProvidersListS2CPacket.class,
             discriminator++,
             Side.CLIENT);
 
-        CHANNEL.registerMessage(
+        channel.registerMessage(
             UploadPatternPacket.Handler.class,
             UploadPatternPacket.class,
             discriminator++,
             Side.SERVER);
+
+        // 标签无线收发器网络包
+        channel.registerMessage(PacketApplyLabel.Handler.class, PacketApplyLabel.class, discriminator++, Side.SERVER);
     }
 }

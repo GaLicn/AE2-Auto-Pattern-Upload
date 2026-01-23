@@ -102,7 +102,7 @@ public class RequestProvidersListPacket implements IMessage {
                     }
                 }
 
-                ModNetwork.CHANNEL.sendTo(new ProvidersListS2CPacket(ids, names, emptySlots), player);
+                ModNetwork.channel.sendTo(new ProvidersListS2CPacket(ids, names, emptySlots), player);
             } catch (Throwable t) {
                 t.printStackTrace();
             }

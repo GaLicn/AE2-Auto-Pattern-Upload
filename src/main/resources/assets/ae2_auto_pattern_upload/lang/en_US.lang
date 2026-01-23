@@ -14,3 +14,12 @@ ae2_auto_pattern_upload.info.mapping_not_found=No mapping with that name was fou
 ae2_auto_pattern_upload.error.read_mappings=Could not read recipe mappings: %s
 ae2_auto_pattern_upload.error.create_template=Could not create default mapping template: %s
 ae2_auto_pattern_upload.error.write_mappings=Could not write recipe mappings: %s
+
+# Labeled Wireless Transceiver
+tile.labeledWirelessTransceiver.name=Labeled Wireless Transceiver
+gui.ae2_auto_pattern_upload.labeled_wireless.title=Labeled Wireless Transceiver
+gui.ae2_auto_pattern_upload.labeled_wireless.apply=Apply
+gui.ae2_auto_pattern_upload.labeled_wireless.clear=Clear
+gui.ae2_auto_pattern_upload.labeled_wireless.channel=Channel: %d
+gui.ae2_auto_pattern_upload.labeled_wireless.not_connected=Not Connected
+gui.ae2_auto_pattern_upload.labeled_wireless.owner=Owner: %s

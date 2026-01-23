@@ -74,7 +74,7 @@ public class GuiUploadButtonHandler {
             return;
         }
         if (event.button.id == BUTTON_UPLOAD_ID && event.button == uploadButton) {
-            ModNetwork.CHANNEL.sendToServer(new RequestProvidersListPacket());
+            ModNetwork.channel.sendToServer(new RequestProvidersListPacket());
             event.setCanceled(true);
         }
     }

@@ -244,7 +244,7 @@ public class GuiProviderSelect extends GuiScreen {
     }
 
     protected void handleSelect(long providerId) {
-        ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(providerId));
+        ModNetwork.channel.sendToServer(new UploadPatternPacket(providerId));
         if (this.parent != null) {
             this.mc.displayGuiScreen(parent);
         } else {
