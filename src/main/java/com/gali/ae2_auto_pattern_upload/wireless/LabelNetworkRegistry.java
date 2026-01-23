@@ -197,11 +197,12 @@ public class LabelNetworkRegistry extends WorldSavedData {
             Key key = entry.getKey();
             // 不过滤所有者，显示所有标签
             if (key.dim != Integer.MIN_VALUE && key.dim != dimId) continue;
+            LabelNetwork network = entry.getValue();
             list.add(
                 new LabelNetworkSnapshot(
                     key.label,
-                    entry.getValue()
-                        .getChannel()));
+                    network.getChannel(),
+                    network.endpointCount())); // 添加在线数
         }
         list.sort(Comparator.comparing(s -> s.label)); // 按标签名排序
         return list;
@@ -257,10 +258,12 @@ public class LabelNetworkRegistry extends WorldSavedData {
 
         public final String label;
         public final long channel;
+        public final int onlineCount; // 在线收发器数量
 
-        public LabelNetworkSnapshot(String label, long channel) {
+        public LabelNetworkSnapshot(String label, long channel, int onlineCount) {
             this.label = label;
             this.channel = channel;
+            this.onlineCount = onlineCount;
         }
     }
 

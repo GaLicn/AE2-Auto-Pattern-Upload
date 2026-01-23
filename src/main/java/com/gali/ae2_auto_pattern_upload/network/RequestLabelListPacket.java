@@ -56,22 +56,51 @@ public class RequestLabelListPacket implements IMessage {
             TileLabeledWirelessTransceiver tile = (TileLabeledWirelessTransceiver) te;
             LabelNetworkRegistry registry = LabelNetworkRegistry.get(world);
             if (registry == null) {
-                return new LabelListS2CPacket(message.x, message.y, message.z, new String[0], new long[0], "", 0);
+                return new LabelListS2CPacket(
+                    message.x,
+                    message.y,
+                    message.z,
+                    new String[0],
+                    new long[0],
+                    new int[0],
+                    "",
+                    0,
+                    0);
             }
 
             // 获取标签列表（不需要所有者过滤，显示所有标签）
             var list = registry.listNetworks(world, null);
             String[] labels = new String[list.size()];
             long[] channels = new long[list.size()];
+            int[] onlineCounts = new int[list.size()];
             for (int i = 0; i < list.size(); i++) {
                 labels[i] = list.get(i).label;
                 channels[i] = list.get(i).channel;
+                onlineCounts[i] = list.get(i).onlineCount;
             }
 
             String currentLabel = tile.getLabelForDisplay();
             long currentChannel = tile.getFrequency();
+            
+            // 获取当前标签的在线数
+            int currentOnlineCount = 0;
+            if (currentLabel != null && !currentLabel.isEmpty()) {
+                LabelNetworkRegistry.LabelNetwork network = registry.getNetwork(world, currentLabel, null);
+                if (network != null) {
+                    currentOnlineCount = network.endpointCount();
+                }
+            }
 
-            return new LabelListS2CPacket(message.x, message.y, message.z, labels, channels, currentLabel, currentChannel);
+            return new LabelListS2CPacket(
+                message.x,
+                message.y,
+                message.z,
+                labels,
+                channels,
+                onlineCounts,
+                currentLabel,
+                currentChannel,
+                currentOnlineCount);
         }
     }
 }
