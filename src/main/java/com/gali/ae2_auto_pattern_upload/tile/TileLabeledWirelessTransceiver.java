@@ -34,6 +34,7 @@ public class TileLabeledWirelessTransceiver extends AENetworkTile implements IWi
     private boolean beingRemoved = false;
     private UUID placerId = null;
     private String placerName = null;
+    private boolean isInitialized = false;
 
     private final LabelLink labelLink = new LabelLink(this);
 
@@ -251,19 +252,22 @@ public class TileLabeledWirelessTransceiver extends AENetworkTile implements IWi
     @Override
     public void onReady() {
         super.onReady();
-        if (worldObj != null && !worldObj.isRemote && labelForDisplay != null) {
+        if (worldObj != null && !worldObj.isRemote && labelForDisplay != null && !isInitialized) {
+            isInitialized = true;
             refreshLabel(true);
         }
     }
 
     @Override
     public void onChunkUnload() {
+        isInitialized = false;
         labelLink.onUnloadOrRemove();
         super.onChunkUnload();
     }
 
     @Override
     public void invalidate() {
+        isInitialized = false;
         labelLink.onUnloadOrRemove();
         super.invalidate();
     }
