@@ -23,11 +23,12 @@ public class LabelListS2CPacket implements IMessage {
     private String currentLabel;
     private long currentChannel;
     private int currentOnlineCount; // 当前标签的在线数
+    private int currentUsedChannels; // 当前节点使用的频道数
 
     public LabelListS2CPacket() {}
 
     public LabelListS2CPacket(int x, int y, int z, String[] labels, long[] channels, int[] onlineCounts,
-        String currentLabel, long currentChannel, int currentOnlineCount) {
+        String currentLabel, long currentChannel, int currentOnlineCount, int currentUsedChannels) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -37,6 +38,7 @@ public class LabelListS2CPacket implements IMessage {
         this.currentLabel = currentLabel;
         this.currentChannel = currentChannel;
         this.currentOnlineCount = currentOnlineCount;
+        this.currentUsedChannels = currentUsedChannels;
     }
 
     @Override
@@ -58,6 +60,7 @@ public class LabelListS2CPacket implements IMessage {
         currentLabel = ByteBufUtils.readUTF8String(buf);
         currentChannel = buf.readLong();
         currentOnlineCount = buf.readInt();
+        currentUsedChannels = buf.readInt();
     }
 
     @Override
@@ -76,6 +79,7 @@ public class LabelListS2CPacket implements IMessage {
         ByteBufUtils.writeUTF8String(buf, currentLabel != null ? currentLabel : "");
         buf.writeLong(currentChannel);
         buf.writeInt(currentOnlineCount);
+        buf.writeInt(currentUsedChannels);
     }
 
     public static class Handler implements IMessageHandler<LabelListS2CPacket, IMessage> {
@@ -93,7 +97,8 @@ public class LabelListS2CPacket implements IMessage {
                         message.onlineCounts,
                         message.currentLabel,
                         message.currentChannel,
-                        message.currentOnlineCount);
+                        message.currentOnlineCount,
+                        message.currentUsedChannels);
                 }
             }
             return null;

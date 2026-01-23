@@ -65,6 +65,7 @@ public class RequestLabelListPacket implements IMessage {
                     new int[0],
                     "",
                     0,
+                    0,
                     0);
             }
 
@@ -91,6 +92,19 @@ public class RequestLabelListPacket implements IMessage {
                 }
             }
 
+            // 在服务器端获取当前节点使用的频道数
+            int currentUsedChannels = 0;
+            try {
+                appeng.api.networking.IGridNode node = tile.getGridNode();
+                if (node != null && node.isActive()) {
+                    for (appeng.api.networking.IGridConnection gc : node.getConnections()) {
+                        currentUsedChannels = Math.max(gc.getUsedChannels(), currentUsedChannels);
+                    }
+                }
+            } catch (Exception e) {
+                currentUsedChannels = 0;
+            }
+
             return new LabelListS2CPacket(
                 message.x,
                 message.y,
@@ -100,7 +114,8 @@ public class RequestLabelListPacket implements IMessage {
                 onlineCounts,
                 currentLabel,
                 currentChannel,
-                currentOnlineCount);
+                currentOnlineCount,
+                currentUsedChannels);
         }
     }
 }

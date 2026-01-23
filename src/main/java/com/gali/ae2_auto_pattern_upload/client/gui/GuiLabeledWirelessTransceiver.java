@@ -64,6 +64,7 @@ public class GuiLabeledWirelessTransceiver extends GuiContainer {
     private int selectedIndex = -1;
     private String selectedLabel = "";
     private int currentOnlineCount = 0; // 当前标签的在线数
+    private int currentUsedChannels = 0; // 当前节点使用的频道数（从服务器接收）
 
     public GuiLabeledWirelessTransceiver(InventoryPlayer playerInv, TileLabeledWirelessTransceiver tile) {
         super(new ContainerLabeledWirelessTransceiver(playerInv, tile));
@@ -204,7 +205,7 @@ public class GuiLabeledWirelessTransceiver extends GuiContainer {
      * 更新标签列表（从服务器接收）
      */
     public void updateLabelList(String[] labels, long[] channels, int[] onlineCounts, String currentLabel,
-        long currentChannel, int currentOnlineCount) {
+        long currentChannel, int currentOnlineCount, int currentUsedChannels) {
         String prevSelected = selectedLabel;
         allLabels.clear();
         for (int i = 0; i < labels.length; i++) {
@@ -212,6 +213,7 @@ public class GuiLabeledWirelessTransceiver extends GuiContainer {
         }
 
         this.currentOnlineCount = currentOnlineCount;
+        this.currentUsedChannels = currentUsedChannels;
 
         // 恢复选中状态
         if (prevSelected != null && !prevSelected.isEmpty()) {
@@ -364,11 +366,10 @@ public class GuiLabeledWirelessTransceiver extends GuiContainer {
             + currentOnlineCount;
         fontRendererObj.drawString(onlineLine, x + 2, y + lineHeight, 0x404040);
 
-        // 频道：显示 AE 网络使用的频道数
-        int usedChannels = getUsedChannels();
+        // 频道：显示 AE 网络使用的频道数（从服务器接收）
         String channelLine = StatCollector.translateToLocal("gui.ae2_auto_pattern_upload.labeled_wireless.channels")
             + ": "
-            + (usedChannels >= 0 ? String.valueOf(usedChannels) : "-");
+            + currentUsedChannels;
         fontRendererObj.drawString(channelLine, x + 2, y + lineHeight * 2, 0x404040);
 
         // 映射频率：显示收发器管理的内部频率
@@ -381,36 +382,6 @@ public class GuiLabeledWirelessTransceiver extends GuiContainer {
             x + 2,
             y + lineHeight * 3,
             0x404040);
-    }
-
-    /**
-     * 获取 AE 网络使用的频道数
-     */
-    private int getUsedChannels() {
-        try {
-            appeng.api.networking.IGridNode node = tile.getGridNode();
-            if (node == null) {
-                return -1;
-            }
-            if (!node.isActive()) {
-                return 0; // 节点未激活，频道为 0
-            }
-            
-            // 获取所有连接中使用的最大频道数
-            int maxChannels = 0;
-            Iterable<appeng.api.networking.IGridConnection> connections = node.getConnections();
-            if (connections != null) {
-                for (appeng.api.networking.IGridConnection gc : connections) {
-                    if (gc != null) {
-                        int channels = gc.getUsedChannels();
-                        maxChannels = Math.max(maxChannels, channels);
-                    }
-                }
-            }
-            return maxChannels;
-        } catch (Exception e) {
-            return -1;
-        }
     }
 
     @Override
