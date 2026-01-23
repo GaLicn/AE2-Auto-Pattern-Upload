@@ -34,5 +34,17 @@ public final class ModNetwork {
 
         // 标签无线收发器网络包
         channel.registerMessage(PacketApplyLabel.Handler.class, PacketApplyLabel.class, discriminator++, Side.SERVER);
+
+        // 标签列表同步
+        channel.registerMessage(
+            RequestLabelListPacket.Handler.class,
+            RequestLabelListPacket.class,
+            discriminator++,
+            Side.SERVER);
+        channel.registerMessage(
+            LabelListS2CPacket.Handler.class,
+            LabelListS2CPacket.class,
+            discriminator++,
+            Side.CLIENT);
     }
 }

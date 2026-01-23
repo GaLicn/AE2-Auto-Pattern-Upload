@@ -93,13 +93,14 @@ public class LabelNetworkRegistry extends WorldSavedData {
     }
 
     /**
-     * 注册/切换标签
+     * 注册/切换标签（不使用所有者）
      */
     public synchronized LabelNetwork register(World world, String rawLabel, UUID placerId, IWirelessEndpoint endpoint) {
         String label = normalizeLabel(rawLabel);
         if (label == null) return null;
 
-        UUID owner = placerId != null ? placerId : PUBLIC_NETWORK_UUID;
+        // 不使用所有者，所有标签都是公共的
+        UUID owner = PUBLIC_NETWORK_UUID;
         int dimId = isCrossDimEnabled() ? Integer.MIN_VALUE : world.provider.dimensionId;
         Key key = new Key(dimId, label, owner);
 
@@ -157,24 +158,24 @@ public class LabelNetworkRegistry extends WorldSavedData {
     }
 
     /**
-     * 获取网络
+     * 获取网络（不使用所有者）
      */
     public synchronized LabelNetwork getNetwork(World world, String rawLabel, UUID placerId) {
         String label = normalizeLabel(rawLabel);
         if (label == null) return null;
-        UUID owner = placerId != null ? placerId : PUBLIC_NETWORK_UUID;
+        UUID owner = PUBLIC_NETWORK_UUID; // 所有标签都是公共的
         int dimId = isCrossDimEnabled() ? Integer.MIN_VALUE : world.provider.dimensionId;
         Key key = new Key(dimId, label, owner);
         return networks.get(key);
     }
 
     /**
-     * 删除网络
+     * 删除网络（不使用所有者）
      */
     public synchronized boolean removeNetwork(World world, String rawLabel, UUID placerId) {
         String label = normalizeLabel(rawLabel);
         if (label == null) return false;
-        UUID owner = placerId != null ? placerId : PUBLIC_NETWORK_UUID;
+        UUID owner = PUBLIC_NETWORK_UUID; // 所有标签都是公共的
         int dimId = isCrossDimEnabled() ? Integer.MIN_VALUE : world.provider.dimensionId;
         Key key = new Key(dimId, label, owner);
         LabelNetwork net = networks.remove(key);
@@ -187,15 +188,14 @@ public class LabelNetworkRegistry extends WorldSavedData {
     }
 
     /**
-     * 获取玩家所属网络列表
+     * 获取所有网络列表（不过滤所有者）
      */
     public synchronized List<LabelNetworkSnapshot> listNetworks(World world, UUID placerId) {
-        UUID owner = placerId != null ? placerId : PUBLIC_NETWORK_UUID;
         int dimId = isCrossDimEnabled() ? Integer.MIN_VALUE : world.provider.dimensionId;
         List<LabelNetworkSnapshot> list = new ArrayList<>();
         for (Map.Entry<Key, LabelNetwork> entry : networks.entrySet()) {
             Key key = entry.getKey();
-            if (!Objects.equals(key.owner, owner)) continue;
+            // 不过滤所有者，显示所有标签
             if (key.dim != Integer.MIN_VALUE && key.dim != dimId) continue;
             list.add(
                 new LabelNetworkSnapshot(
@@ -203,7 +203,7 @@ public class LabelNetworkRegistry extends WorldSavedData {
                     entry.getValue()
                         .getChannel()));
         }
-        list.sort(Comparator.comparingLong(s -> s.channel));
+        list.sort(Comparator.comparing(s -> s.label)); // 按标签名排序
         return list;
     }
 

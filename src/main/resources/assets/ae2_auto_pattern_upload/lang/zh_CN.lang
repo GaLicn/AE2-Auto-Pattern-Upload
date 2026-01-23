@@ -18,8 +18,16 @@ ae2_auto_pattern_upload.error.write_mappings=无法写入配方映射：%s
 # 标签无线收发器
 tile.labeledWirelessTransceiver.name=标签无线收发器
 gui.ae2_auto_pattern_upload.labeled_wireless.title=标签无线收发器
+gui.ae2_auto_pattern_upload.labeled_wireless.info=收发器信息
 gui.ae2_auto_pattern_upload.labeled_wireless.apply=应用
 gui.ae2_auto_pattern_upload.labeled_wireless.clear=清除
+gui.ae2_auto_pattern_upload.labeled_wireless.button.new=新建
+gui.ae2_auto_pattern_upload.labeled_wireless.button.delete=删除
+gui.ae2_auto_pattern_upload.labeled_wireless.button.set=设定
+gui.ae2_auto_pattern_upload.labeled_wireless.button.refresh=断开
+gui.ae2_auto_pattern_upload.labeled_wireless.current_label=当前标签
+gui.ae2_auto_pattern_upload.labeled_wireless.current_owner=所有者
+gui.ae2_auto_pattern_upload.labeled_wireless.online_count=在线数
 gui.ae2_auto_pattern_upload.labeled_wireless.channel=频道: %d
 gui.ae2_auto_pattern_upload.labeled_wireless.not_connected=未连接
 gui.ae2_auto_pattern_upload.labeled_wireless.owner=所有者: %s

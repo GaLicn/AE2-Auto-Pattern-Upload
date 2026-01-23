@@ -51,6 +51,14 @@ public class TileLabeledWirelessTransceiver extends AENetworkTile implements IWi
     }
 
     @Override
+    public void validate() {
+        super.validate();
+        if (worldObj != null && !worldObj.isRemote) {
+            getProxy().onReady();
+        }
+    }
+
+    @Override
     public AECableType getCableConnectionType(ForgeDirection dir) {
         return AECableType.SMART;
     }

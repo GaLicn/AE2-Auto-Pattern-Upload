@@ -33,6 +33,11 @@ public class BlockLabeledWirelessTransceiver extends AEBaseTileBlock {
     }
 
     @Override
+    public int getRenderType() {
+        return 0; // 使用标准方块渲染
+    }
+
+    @Override
     @SideOnly(Side.CLIENT)
     public void registerBlockIcons(IIconRegister reg) {
         // 暂时使用铁块纹理作为占位
