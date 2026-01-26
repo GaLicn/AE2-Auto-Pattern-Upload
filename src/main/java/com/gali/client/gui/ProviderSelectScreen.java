@@ -189,23 +189,24 @@ public class ProviderSelectScreen extends Screen {
 
     @Override
     protected void init() {
-        super.init();
         this.clearWidgets();
         entryButtons.clear();
 
         int centerX = this.width / 2;
         int startY = this.height / 2 - 70;
 
-        // 搜索框
+        // 搜索框（置于条目上方）
         if (searchBox == null) {
             searchBox = new EditBox(this.font, centerX - 120, startY - 25, 240, 18, Component.literal("搜索"));
         } else {
+            // 重新定位，保持输入值
             searchBox.setX(centerX - 120);
             searchBox.setY(startY - 25);
             searchBox.setWidth(240);
         }
         searchBox.setValue(query);
         searchBox.setResponder(text -> {
+            // 只有当输入真正发生变化时，才重置页码与过滤
             if (Objects.equals(text, query)) return;
             query = text;
             page = 0;
@@ -214,45 +215,52 @@ public class ProviderSelectScreen extends Screen {
         });
         this.addRenderableWidget(searchBox);
 
-        // 供应器按钮池
+        // 初始化按钮池
         int buttonWidth = 240;
         int buttonHeight = 20;
         int gap = 5;
         for (int i = 0; i < PAGE_SIZE; i++) {
             int btnIdx = i;
             Button btn = Button.builder(Component.literal(""), b -> {
-                int actualIdx = buttonIndexMap[btnIdx];
-                if (actualIdx >= 0 && actualIdx < fIds.size()) {
-                    onChoose(actualIdx);
-                }
-            }).bounds(centerX - buttonWidth / 2, startY + i * (buttonHeight + gap), buttonWidth, buttonHeight).build();
+                        int actualIdx = buttonIndexMap[btnIdx];
+                        if (actualIdx >= 0 && actualIdx < fIds.size()) {
+                            onChoose(actualIdx);
+                        }
+                    }).bounds(centerX - buttonWidth / 2, startY + i * (buttonHeight + gap), buttonWidth, buttonHeight)
+                    .build();
             entryButtons.add(btn);
-            buttonIndexMap[i] = -1;
+            buttonIndexMap[i] = -1; // 初始化为无效索引
             this.addRenderableWidget(btn);
         }
 
-        // 翻页按钮
+        // 分页按钮
         int navY = startY + PAGE_SIZE * (buttonHeight + gap) + 10;
         prevButton = Button.builder(Component.literal("<"), b -> changePage(-1))
-                .bounds(centerX - 60, navY, 20, 20).build();
+                .bounds(centerX - 60, navY, 20, 20)
+                .build();
         nextButton = Button.builder(Component.literal(">"), b -> changePage(1))
-                .bounds(centerX + 40, navY, 20, 20).build();
+                .bounds(centerX + 40, navY, 20, 20)
+                .build();
         this.addRenderableWidget(prevButton);
         this.addRenderableWidget(nextButton);
 
-        // 映射管理区域
+        // 映射按钮和输入框
+        // 统一按钮宽度
         int btnWidth2 = 80;
         int inputWidth = 120;
         int btnGap = 5;
-        int totalWidth = btnWidth2 + btnGap + inputWidth + btnGap + btnWidth2 * 3 + btnGap * 2;
+
+        // 总宽度 = 重载按钮 + 输入框 + 添加 + 删除 + 关闭按钮 + 间距
+        int totalWidth = btnWidth2 + btnGap + inputWidth + btnGap + btnWidth2 * 2 + btnGap + btnWidth2;
         int startX = centerX - totalWidth / 2;
 
-        // 重载按钮
+        // 重载映射按钮
         Button reload = Button.builder(Component.literal("重载"), b -> reloadMapping())
-                .bounds(startX, navY + 30, btnWidth2, 20).build();
+                .bounds(startX, navY + 30, btnWidth2, 20)
+                .build();
         this.addRenderableWidget(reload);
 
-        // 中文名输入框
+        // 中文名输入框（用于新增映射的值）
         if (cnInput == null) {
             cnInput = new EditBox(this.font, startX + btnWidth2 + btnGap, navY + 30, inputWidth, 20, Component.literal("映射名称"));
         } else {
@@ -264,20 +272,23 @@ public class ProviderSelectScreen extends Screen {
 
         // 关闭按钮
         Button close = Button.builder(Component.translatable("gui.cancel"), b -> onClose())
-                .bounds(startX + btnWidth2 + btnGap + inputWidth + btnGap, navY + 30, btnWidth2, 20).build();
+                .bounds(startX + btnWidth2 + btnGap + inputWidth + btnGap, navY + 30, btnWidth2, 20)
+                .build();
         this.addRenderableWidget(close);
 
-        // 添加映射按钮
+        // 添加映射按钮（使用当前搜索关键字 -> 中文）
         Button addMap = Button.builder(Component.literal("添加"), b -> addMapping())
-                .bounds(startX + btnWidth2 + btnGap + inputWidth + btnGap + btnWidth2 + btnGap, navY + 30, btnWidth2, 20).build();
+                .bounds(startX + btnWidth2 + btnGap + inputWidth + btnGap + btnWidth2 + btnGap, navY + 30, btnWidth2, 20)
+                .build();
         this.addRenderableWidget(addMap);
 
-        // 删除映射按钮
-        Button delMap = Button.builder(Component.literal("删除"), b -> deleteMapping())
-                .bounds(startX + btnWidth2 + btnGap + inputWidth + btnGap + btnWidth2 * 2 + btnGap * 2, navY + 30, btnWidth2, 20).build();
-        this.addRenderableWidget(delMap);
+        // 删除映射按钮（按中文值精确匹配删除）按钮
+        Button delByCn = Button.builder(Component.literal("删除"), b -> deleteMapping())
+                .bounds(startX + btnWidth2 + btnGap + inputWidth + btnGap + btnWidth2 * 2 + btnGap * 2, navY + 30, btnWidth2, 20)
+                .build();
+        this.addRenderableWidget(delByCn);
 
-        refreshButtons();
+        refreshButtons(); // 初始化完成后刷新按钮状态
     }
 
     private void changePage(int delta) {
@@ -437,7 +448,6 @@ public class ProviderSelectScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics);
-        graphics.drawCenteredString(this.font, this.title, this.width / 2, this.height / 2 - 100, 0xFFFFFF);
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
