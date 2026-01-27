@@ -9,6 +9,10 @@
     "jei.EncodePatternTransferHandlerMixin"
   ],
   "client": [
+    "client.PatternEncodingTermScreenMixin",
+    "client.accessor.AEBaseScreenAccessor",
+    "client.accessor.AbstractContainerScreenAccessor",
+    "client.accessor.ScreenAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
