@@ -21,21 +21,21 @@ public class ModNetwork {
         // C2S: 请求供应器列表
         CHANNEL.messageBuilder(RequestProvidersListPacket.class, packetId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(RequestProvidersListPacket::encode)
-                .decoder(RequestProvidersListPacket::new)
+                .decoder(RequestProvidersListPacket::decode)
                 .consumerMainThread(RequestProvidersListPacket::handle)
                 .add();
 
         // S2C: 返回供应器列表
         CHANNEL.messageBuilder(ProvidersListS2CPacket.class, packetId++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(ProvidersListS2CPacket::encode)
-                .decoder(ProvidersListS2CPacket::new)
+                .decoder(ProvidersListS2CPacket::decode)
                 .consumerMainThread(ProvidersListS2CPacket::handle)
                 .add();
 
         // C2S: 上传样板到供应器
         CHANNEL.messageBuilder(UploadPatternPacket.class, packetId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(UploadPatternPacket::encode)
-                .decoder(UploadPatternPacket::new)
+                .decoder(UploadPatternPacket::decode)
                 .consumerMainThread(UploadPatternPacket::handle)
                 .add();
     }

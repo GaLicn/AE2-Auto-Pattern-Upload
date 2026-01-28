@@ -24,20 +24,22 @@ public class UploadPatternPacket {
         this.providerId = providerId;
     }
     
-    public UploadPatternPacket(FriendlyByteBuf buf) {
-        this.providerId = buf.readLong();
+    public static UploadPatternPacket decode(FriendlyByteBuf buf) {
+        return new UploadPatternPacket(buf.readLong());
     }
     
-    public void encode(FriendlyByteBuf buf) {
-        buf.writeLong(this.providerId);
+    public static void encode(UploadPatternPacket msg, FriendlyByteBuf buf) {
+        buf.writeLong(msg.providerId);
     }
     
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(UploadPatternPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
             if (player == null || !(player.containerMenu instanceof PatternEncodingTermMenu menu)) {
                 return;
             }
+            
+            long providerId = msg.providerId;
             
             try {
                 // 通过Mixin访问器获取编码终端的样板输出槽

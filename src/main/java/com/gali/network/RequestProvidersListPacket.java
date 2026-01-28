@@ -21,15 +21,15 @@ public class RequestProvidersListPacket {
     public RequestProvidersListPacket() {
     }
     
-    public RequestProvidersListPacket(FriendlyByteBuf buf) {
-        // 无数据需要读取
+    public static RequestProvidersListPacket decode(FriendlyByteBuf buf) {
+        return new RequestProvidersListPacket();
     }
     
-    public void encode(FriendlyByteBuf buf) {
+    public static void encode(RequestProvidersListPacket msg, FriendlyByteBuf buf) {
         // 无数据需要写入
     }
     
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(RequestProvidersListPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
             if (player == null || !(player.containerMenu instanceof PatternEncodingTermMenu menu)) {
