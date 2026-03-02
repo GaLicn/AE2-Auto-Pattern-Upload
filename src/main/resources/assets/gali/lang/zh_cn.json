@@ -1,0 +1,18 @@
+{
+  "gali.gui.provider_select": "选择样板供应器",
+  "gali.gui.search": "搜索",
+  "gali.gui.reload": "重载",
+  "gali.gui.mapping_name": "映射名称",
+  "gali.gui.add": "添加",
+  "gali.gui.delete": "删除",
+  "gali.gui.error.enter_search_key": "请输入搜索关键字",
+  "gali.gui.error.enter_mapping_name": "请输入映射名称",
+  "gali.gui.error.enter_delete_name": "请输入要删除的映射名称",
+  "gali.gui.upload_pattern": "上传样板到供应器",
+  "gali.gui.mapping_added": "已添加映射: %s -> %s",
+  "gali.gui.mapping_add_failed": "添加映射失败",
+  "gali.gui.mapping_reloaded": "映射已重载",
+  "gali.gui.mapping_reload_failed": "重载失败: %s",
+  "gali.gui.mapping_removed": "已删除 %s 个映射",
+  "gali.gui.mapping_not_found": "未找到映射: %s"
+}

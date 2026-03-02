@@ -1,0 +1,18 @@
+{
+  "gali.gui.provider_select": "Select Pattern Provider",
+  "gali.gui.search": "Search",
+  "gali.gui.reload": "Reload",
+  "gali.gui.mapping_name": "Mapping Name",
+  "gali.gui.add": "Add",
+  "gali.gui.delete": "Delete",
+  "gali.gui.error.enter_search_key": "Please enter a search keyword",
+  "gali.gui.error.enter_mapping_name": "Please enter a mapping name",
+  "gali.gui.error.enter_delete_name": "Please enter a mapping name to delete",
+  "gali.gui.upload_pattern": "Upload Pattern to Provider",
+  "gali.gui.mapping_added": "Added mapping: %s -> %s",
+  "gali.gui.mapping_add_failed": "Failed to add mapping",
+  "gali.gui.mapping_reloaded": "Mappings reloaded",
+  "gali.gui.mapping_reload_failed": "Reload failed: %s",
+  "gali.gui.mapping_removed": "Removed %s mappings",
+  "gali.gui.mapping_not_found": "Mapping not found: %s"
+}

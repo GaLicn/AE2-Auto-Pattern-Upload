@@ -51,7 +51,7 @@ public class ProviderSelectScreen extends Screen {
     private String lastLanguage = "";
 
     public ProviderSelectScreen(List<Long> ids, List<String> names, List<Integer> emptySlots) {
-        super(Component.literal("选择样板供应器"));
+        super(Component.translatable("gali.gui.provider_select"));
         this.parent = null;
         this.ids = ids;
         this.names = names;
@@ -197,7 +197,7 @@ public class ProviderSelectScreen extends Screen {
 
         // 搜索框（置于条目上方）
         if (searchBox == null) {
-            searchBox = new EditBox(this.font, centerX - 120, startY - 25, 240, 18, Component.literal("搜索"));
+            searchBox = new EditBox(this.font, centerX - 120, startY - 25, 240, 18, Component.translatable("gali.gui.search"));
         } else {
             // 重新定位，保持输入值
             searchBox.setX(centerX - 120);
@@ -255,14 +255,14 @@ public class ProviderSelectScreen extends Screen {
         int startX = centerX - totalWidth / 2;
 
         // 重载映射按钮
-        Button reload = Button.builder(Component.literal("重载"), b -> reloadMapping())
+        Button reload = Button.builder(Component.translatable("gali.gui.reload"), b -> reloadMapping())
                 .bounds(startX, navY + 30, btnWidth2, 20)
                 .build();
         this.addRenderableWidget(reload);
 
         // 中文名输入框（用于新增映射的值）
         if (cnInput == null) {
-            cnInput = new EditBox(this.font, startX + btnWidth2 + btnGap, navY + 30, inputWidth, 20, Component.literal("映射名称"));
+            cnInput = new EditBox(this.font, startX + btnWidth2 + btnGap, navY + 30, inputWidth, 20, Component.translatable("gali.gui.mapping_name"));
         } else {
             cnInput.setX(startX + btnWidth2 + btnGap);
             cnInput.setY(navY + 30);
@@ -277,13 +277,13 @@ public class ProviderSelectScreen extends Screen {
         this.addRenderableWidget(close);
 
         // 添加映射按钮（使用当前搜索关键字 -> 中文）
-        Button addMap = Button.builder(Component.literal("添加"), b -> addMapping())
+        Button addMap = Button.builder(Component.translatable("gali.gui.add"), b -> addMapping())
                 .bounds(startX + btnWidth2 + btnGap + inputWidth + btnGap + btnWidth2 + btnGap, navY + 30, btnWidth2, 20)
                 .build();
         this.addRenderableWidget(addMap);
 
         // 删除映射按钮（按中文值精确匹配删除）按钮
-        Button delByCn = Button.builder(Component.literal("删除"), b -> deleteMapping())
+        Button delByCn = Button.builder(Component.translatable("gali.gui.delete"), b -> deleteMapping())
                 .bounds(startX + btnWidth2 + btnGap + inputWidth + btnGap + btnWidth2 * 2 + btnGap * 2, navY + 30, btnWidth2, 20)
                 .build();
         this.addRenderableWidget(delByCn);
@@ -337,15 +337,15 @@ public class ProviderSelectScreen extends Screen {
         String key = query == null ? "" : query.trim();
         String value = cnInput == null ? "" : cnInput.getValue().trim();
         if (key.isEmpty()) {
-            sendMessage("请输入搜索关键字");
+            sendMessage(Component.translatable("gali.gui.error.enter_search_key"));
             return;
         }
         if (value.isEmpty()) {
-            sendMessage("请输入映射名称");
+            sendMessage(Component.translatable("gali.gui.error.enter_mapping_name"));
             return;
         }
         if (RecipeTypeNameConfig.addOrUpdateAliasMapping(key, value)) {
-            sendMessage("已添加映射: " + key + " -> " + value);
+            sendMessage(Component.translatable("gali.gui.mapping_added", key, value));
             this.query = value;
             if (this.searchBox != null) {
                 this.searchBox.setValue(value);
@@ -357,28 +357,28 @@ public class ProviderSelectScreen extends Screen {
             page = 0;
             refreshButtons();
         } else {
-            sendMessage("添加映射失败");
+            sendMessage(Component.translatable("gali.gui.mapping_add_failed"));
         }
     }
 
     private void reloadMapping() {
         try {
             RecipeTypeNameConfig.loadRecipeTypeNames();
-            sendMessage("映射已重载");
+            sendMessage(Component.translatable("gali.gui.mapping_reloaded"));
         } catch (Exception e) {
-            sendMessage("重载失败: " + e.getMessage());
+            sendMessage(Component.translatable("gali.gui.mapping_reload_failed", e.getMessage()));
         }
     }
 
     private void deleteMapping() {
         String value = cnInput == null ? "" : cnInput.getValue().trim();
         if (value.isEmpty()) {
-            sendMessage("请输入要删除的映射名称");
+            sendMessage(Component.translatable("gali.gui.error.enter_delete_name"));
             return;
         }
         int removed = RecipeTypeNameConfig.removeMappingsByCnValue(value);
         if (removed > 0) {
-            sendMessage("已删除 " + removed + " 个映射");
+            sendMessage(Component.translatable("gali.gui.mapping_removed", removed));
             try {
                 RecipeTypeNameConfig.loadRecipeTypeNames();
             } catch (Exception ignored) {}
@@ -386,15 +386,16 @@ public class ProviderSelectScreen extends Screen {
             page = 0;
             refreshButtons();
         } else {
-            sendMessage("未找到映射: " + value);
+            sendMessage(Component.translatable("gali.gui.mapping_not_found", value));
         }
     }
 
-    private void sendMessage(String msg) {
-        if (this.minecraft != null && this.minecraft.player != null) {
-            this.minecraft.player.displayClientMessage(Component.literal(msg), true);
-        }
-    }
+    private void sendMessage(Component component) {
+		if (this.minecraft != null && this.minecraft.player != null) {
+			this.minecraft.player.displayClientMessage(component, true);
+		}
+	}
+
 
     @Override
     public void onClose() {

@@ -96,7 +96,7 @@ public abstract class PatternEncodingTermScreenMixin {
                 return Icon.ARROW_UP;
             }
         };
-        btn.setTooltip(Tooltip.create(Component.literal("上传样板到供应器")));
+        btn.setTooltip(Tooltip.create(Component.translatable("gali.gui.upload_pattern")));
         return btn;
     }
 
