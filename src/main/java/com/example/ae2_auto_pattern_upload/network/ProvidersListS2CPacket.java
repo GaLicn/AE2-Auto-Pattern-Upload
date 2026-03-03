@@ -1,11 +1,13 @@
 package com.example.ae2_auto_pattern_upload.network;
 
 import io.netty.buffer.ByteBuf;
+import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +15,10 @@ import java.util.List;
  * S2C: 返回供应器列表到客户端
  */
 public class ProvidersListS2CPacket implements IMessage {
+    public static final int MAX_PROVIDER_NAME_BYTES = 262144;
+    private static final int MAX_PROVIDER_COUNT = 10000;
+    private static final String DEFAULT_PROVIDER_NAME = "Crafting Provider";
+
     private List<Long> ids;
     private List<String> names;
     private List<Integer> emptySlots;
@@ -31,31 +37,54 @@ public class ProvidersListS2CPacket implements IMessage {
     
     @Override
     public void fromBytes(ByteBuf buf) {
-        int size = buf.readInt();
+        PacketBuffer packetBuf = new PacketBuffer(buf);
+        int size = packetBuf.readInt();
+        if (size < 0 || size > MAX_PROVIDER_COUNT) {
+            throw new IllegalArgumentException("Invalid providers list size: " + size);
+        }
+
         ids = new ArrayList<>(size);
         names = new ArrayList<>(size);
         emptySlots = new ArrayList<>(size);
         
         for (int i = 0; i < size; i++) {
-            ids.add(buf.readLong());
-            int nameLen = buf.readInt();
-            byte[] nameBytes = new byte[nameLen];
-            buf.readBytes(nameBytes);
-            names.add(new String(nameBytes, java.nio.charset.StandardCharsets.UTF_8));
-            emptySlots.add(buf.readInt());
+            ids.add(packetBuf.readLong());
+            int nameBytesLength = packetBuf.readVarInt();
+            if (nameBytesLength < 0 || nameBytesLength > MAX_PROVIDER_NAME_BYTES) {
+                throw new IllegalArgumentException("Invalid provider name length: " + nameBytesLength);
+            }
+
+            byte[] nameBytes = new byte[nameBytesLength];
+            packetBuf.readBytes(nameBytes);
+            names.add(new String(nameBytes, StandardCharsets.UTF_8));
+            emptySlots.add(packetBuf.readInt());
         }
     }
     
     @Override
     public void toBytes(ByteBuf buf) {
-        buf.writeInt(ids.size());
-        for (int i = 0; i < ids.size(); i++) {
-            buf.writeLong(ids.get(i));
-            byte[] nameBytes = names.get(i).getBytes(java.nio.charset.StandardCharsets.UTF_8);
-            buf.writeInt(nameBytes.length);
-            buf.writeBytes(nameBytes);
-            buf.writeInt(emptySlots.get(i));
+        PacketBuffer packetBuf = new PacketBuffer(buf);
+        int size = Math.min(ids.size(), Math.min(names.size(), emptySlots.size()));
+        packetBuf.writeInt(size);
+
+        for (int i = 0; i < size; i++) {
+            packetBuf.writeLong(ids.get(i));
+            byte[] nameBytes = normalizeProviderName(names.get(i)).getBytes(StandardCharsets.UTF_8);
+            if (nameBytes.length > MAX_PROVIDER_NAME_BYTES) {
+                throw new IllegalArgumentException("Provider name exceeds max bytes: " + nameBytes.length);
+            }
+
+            packetBuf.writeVarInt(nameBytes.length);
+            packetBuf.writeBytes(nameBytes);
+            packetBuf.writeInt(emptySlots.get(i));
         }
+    }
+
+    public static String normalizeProviderName(String name) {
+        if (name == null || name.isEmpty()) {
+            return DEFAULT_PROVIDER_NAME;
+        }
+        return name;
     }
     
     public static class Handler implements IMessageHandler<ProvidersListS2CPacket, IMessage> {

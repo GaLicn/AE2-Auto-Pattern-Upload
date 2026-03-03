@@ -29,16 +29,23 @@ public class RequestProvidersListPacket implements IMessage {
     public static class Handler implements IMessageHandler<RequestProvidersListPacket, IMessage> {
         @Override
         public IMessage onMessage(RequestProvidersListPacket message, MessageContext ctx) {
+            com.example.ae2_auto_pattern_upload.ExampleMod.LOGGER.info("[APU] Received RequestProvidersListPacket from client");
+            
             EntityPlayerMP player = ctx.getServerHandler().player;
             if (player == null) {
+                com.example.ae2_auto_pattern_upload.ExampleMod.LOGGER.warn("[APU] Player is null in RequestProvidersListPacket handler");
                 return null;
             }
 
+            com.example.ae2_auto_pattern_upload.ExampleMod.LOGGER.info("[APU] Processing request from player: {}", player.getName());
+
             if (player.openContainer == null) {
+                com.example.ae2_auto_pattern_upload.ExampleMod.LOGGER.warn("[APU] Player {} has no open container", player.getName());
                 return null;
             }
 
             Object container = player.openContainer;
+            com.example.ae2_auto_pattern_upload.ExampleMod.LOGGER.info("[APU] Container type: {}", container.getClass().getName());
             
             try {
                 // 获取网络中的供应器列表
@@ -131,7 +138,7 @@ public class RequestProvidersListPacket implements IMessage {
                         }
                         
                         ids.add(providerId);
-                        names.add(providerName);
+                        names.add(ProvidersListS2CPacket.normalizeProviderName(providerName));
                         slots.add(1);  // 暂时设为 1，后续可以改进
                     }
                 }
