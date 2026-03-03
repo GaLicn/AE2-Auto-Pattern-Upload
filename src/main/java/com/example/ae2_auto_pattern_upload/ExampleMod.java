@@ -1,7 +1,9 @@
 package com.example.ae2_auto_pattern_upload;
 
 import com.example.ae2_auto_pattern_upload.network.ModNetwork;
+import com.example.ae2_auto_pattern_upload.proxy.CommonProxy;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,6 +13,10 @@ import org.apache.logging.log4j.Logger;
 public class ExampleMod {
 
     public static final Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);
+    @SidedProxy(
+        clientSide = "com.example.ae2_auto_pattern_upload.proxy.ClientProxy",
+        serverSide = "com.example.ae2_auto_pattern_upload.proxy.CommonProxy")
+    public static CommonProxy PROXY;
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {

@@ -1,5 +1,6 @@
 package com.example.ae2_auto_pattern_upload.network;
 
+import com.example.ae2_auto_pattern_upload.ExampleMod;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
@@ -86,6 +87,18 @@ public class ProvidersListS2CPacket implements IMessage {
         }
         return name;
     }
+
+    public List<Long> getIds() {
+        return ids;
+    }
+
+    public List<String> getNames() {
+        return names;
+    }
+
+    public List<Integer> getEmptySlots() {
+        return emptySlots;
+    }
     
     public static class Handler implements IMessageHandler<ProvidersListS2CPacket, IMessage> {
         @Override
@@ -93,32 +106,7 @@ public class ProvidersListS2CPacket implements IMessage {
             if (ctx == null || ctx.side != Side.CLIENT) {
                 return null;
             }
-            // 在客户端线程上执行
-            try {
-                Class<?> mcClass = Class.forName("net.minecraft.client.Minecraft");
-                final Object mc = mcClass.getMethod("getMinecraft").invoke(null);
-
-                Runnable task = new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            Class<?> guiClass = Class.forName("com.example.ae2_auto_pattern_upload.client.gui.GuiProviderSelect");
-                            Object gui = guiClass
-                                .getConstructor(List.class, List.class, List.class)
-                                .newInstance(message.ids, message.names, message.emptySlots);
-                            mcClass.getMethod("displayGuiScreen", Class.forName("net.minecraft.client.gui.GuiScreen"))
-                                .invoke(mc, gui);
-                        } catch (Throwable t) {
-                            t.printStackTrace();
-                        }
-                    }
-                };
-
-                mcClass.getMethod("addScheduledTask", Runnable.class).invoke(mc, task);
-            } catch (Throwable t) {
-                t.printStackTrace();
-            }
-            
+            ExampleMod.PROXY.handleProvidersListS2C(message);
             return null;
         }
     }
