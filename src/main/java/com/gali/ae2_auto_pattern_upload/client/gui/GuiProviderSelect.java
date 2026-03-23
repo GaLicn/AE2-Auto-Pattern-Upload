@@ -214,7 +214,6 @@ public class GuiProviderSelect extends GuiScreen {
             if (idx >= 0 && idx < filtered.size()) {
                 long providerId = filtered.get(idx).id;
                 handleSelect(providerId);
-                this.mc.displayGuiScreen(null);
             }
             return;
         }
@@ -245,11 +244,7 @@ public class GuiProviderSelect extends GuiScreen {
 
     protected void handleSelect(long providerId) {
         ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(providerId));
-        if (this.parent != null) {
-            this.mc.displayGuiScreen(parent);
-        } else {
-            this.mc.displayGuiScreen(null);
-        }
+        restoreParentScreen();
     }
 
     private void changePage(int delta) {
@@ -378,6 +373,10 @@ public class GuiProviderSelect extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) {
+        if (keyCode == 1 || keyCode == this.mc.gameSettings.keyBindInventory.getKeyCode()) {
+            restoreParentScreen();
+            return;
+        }
         boolean handled = false;
         if (searchBox != null && searchBox.textboxKeyTyped(typedChar, keyCode)) {
             String newQuery = searchBox.getText();
@@ -431,6 +430,12 @@ public class GuiProviderSelect extends GuiScreen {
     @Override
     public boolean doesGuiPauseGame() {
         return false;
+    }
+
+    private void restoreParentScreen() {
+        if (this.mc != null) {
+            this.mc.displayGuiScreen(this.parent);
+        }
     }
 
     protected String translate(String key) {
