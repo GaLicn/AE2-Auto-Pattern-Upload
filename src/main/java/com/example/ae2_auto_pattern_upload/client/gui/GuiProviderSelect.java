@@ -52,8 +52,8 @@ public class GuiProviderSelect extends GuiScreen {
         int bestSlots;
     }
 
-    public GuiProviderSelect(List<Long> ids, List<String> names, List<Integer> emptySlots) {
-        this.parent = null;
+    public GuiProviderSelect(GuiScreen parent, List<Long> ids, List<String> names, List<Integer> emptySlots) {
+        this.parent = parent;
         this.ids = ids;
         this.names = names;
         this.emptySlots = emptySlots;
@@ -171,7 +171,7 @@ public class GuiProviderSelect extends GuiScreen {
             if (idx >= 0 && idx < filtered.size()) {
                 long providerId = filtered.get(idx).id;
                 ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(providerId));
-                this.mc.displayGuiScreen(null);
+                restoreParentScreen();
             }
             return;
         }
@@ -193,7 +193,7 @@ public class GuiProviderSelect extends GuiScreen {
                 deleteMappingFromUI();
                 break;
             case BUTTON_CLOSE:
-                this.mc.displayGuiScreen(parent);
+                restoreParentScreen();
                 break;
             default:
                 break;
@@ -307,6 +307,10 @@ public class GuiProviderSelect extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
+        if (keyCode == 1 || this.mc.gameSettings.keyBindInventory.isActiveAndMatches(keyCode)) {
+            restoreParentScreen();
+            return;
+        }
         boolean handled = false;
         if (searchBox != null && searchBox.textboxKeyTyped(typedChar, keyCode)) {
             String newQuery = searchBox.getText();
@@ -356,6 +360,12 @@ public class GuiProviderSelect extends GuiScreen {
     @Override
     public boolean doesGuiPauseGame() {
         return false;
+    }
+
+    private void restoreParentScreen() {
+        if (this.mc != null) {
+            this.mc.displayGuiScreen(this.parent);
+        }
     }
 
     private String translate(String key) {

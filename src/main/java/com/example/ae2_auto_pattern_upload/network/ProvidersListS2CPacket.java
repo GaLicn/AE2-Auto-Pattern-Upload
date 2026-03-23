@@ -2,6 +2,7 @@ package com.example.ae2_auto_pattern_upload.network;
 
 import com.example.ae2_auto_pattern_upload.ExampleMod;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
@@ -85,7 +86,8 @@ public class ProvidersListS2CPacket implements IMessage {
         if (name == null || name.isEmpty()) {
             return DEFAULT_PROVIDER_NAME;
         }
-        return name;
+        String translationKey = name.replace(":", ".") + ".name";
+        return I18n.format(name);
     }
 
     public List<Long> getIds() {

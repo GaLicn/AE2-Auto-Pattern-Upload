@@ -11,7 +11,8 @@ public class ClientProxy extends CommonProxy {
     @Override
     public void handleProvidersListS2C(ProvidersListS2CPacket message) {
         Minecraft mc = Minecraft.getMinecraft();
-        mc.addScheduledTask(() ->
-            mc.displayGuiScreen(new GuiProviderSelect(message.getIds(), message.getNames(), message.getEmptySlots())));
+        mc.addScheduledTask(() -> {
+            mc.displayGuiScreen(new GuiProviderSelect(mc.currentScreen, message.getIds(), message.getNames(), message.getEmptySlots()));
+        });
     }
 }
