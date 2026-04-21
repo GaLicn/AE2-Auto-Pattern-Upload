@@ -3,12 +3,11 @@ package com.example.ae2_auto_pattern_upload.mixin.ae2;
 import appeng.client.gui.implementations.GuiMEMonitorable;
 import com.example.ae2_auto_pattern_upload.ExampleMod;
 import mezz.jei.Internal;
+import mezz.jei.api.IBookmarkOverlay;
+import mezz.jei.api.IIngredientListOverlay;
 import mezz.jei.api.ingredients.IIngredientHelper;
 import mezz.jei.api.ingredients.IIngredientRegistry;
-import mezz.jei.gui.overlay.IngredientListOverlay;
-import mezz.jei.input.IClickedIngredient;
-import mezz.jei.input.MouseHelper;
-import mezz.jei.runtime.JeiRuntime;
+import mezz.jei.api.IJeiRuntime;
 import net.minecraft.item.ItemStack;
 import org.lwjgl.input.Keyboard;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.io.IOException;
 
 /**
- * Mixin到AE2的终端GUI，实现按F键将JEI标签中的道具名称写入搜索框
+ * Mixin到AE2的终端GUI，实现按F键将JEI/HEI物品列表或HEI书签中的道具名称写入搜索框
  */
 @Mixin(value = GuiMEMonitorable.class)
 public abstract class GuiMEMonitorableMixin {
@@ -52,29 +51,13 @@ public abstract class GuiMEMonitorableMixin {
         }
 
         // 获取JEI运行时
-        JeiRuntime runtime = Internal.getRuntime();
+        IJeiRuntime runtime = Internal.getRuntime();
         if (runtime == null) {
             return;
         }
 
-        // 获取IngredientListOverlay
-        IngredientListOverlay ingredientListOverlay = runtime.getIngredientListOverlay();
-        if (ingredientListOverlay == null) {
-            return;
-        }
-
-        // 获取鼠标位置
-        int mouseX = MouseHelper.getX();
-        int mouseY = MouseHelper.getY();
-
-        // 获取鼠标下的道具
-        IClickedIngredient<?> clickedIngredient = ingredientListOverlay.getIngredientUnderMouse(mouseX, mouseY);
-        if (clickedIngredient == null) {
-            return;
-        }
-
-        // 提取道具值
-        Object ingredientValue = clickedIngredient.getValue();
+        // 先检查主物品列表，再检查HEI书签列表
+        Object ingredientValue = getIngredientUnderMouse(runtime);
         if (ingredientValue == null) {
             return;
         }
@@ -97,11 +80,25 @@ public abstract class GuiMEMonitorableMixin {
             repo.setSearchString(itemName);
         }
 
-        // 设置搜索框焦点
-        searchField.setFocused(true);
-
         // 阻止原始方法继续执行，避免额外输入 "f"
         ci.cancel();
+    }
+
+    private Object getIngredientUnderMouse(IJeiRuntime runtime) {
+        IIngredientListOverlay ingredientListOverlay = runtime.getIngredientListOverlay();
+        if (ingredientListOverlay != null) {
+            Object ingredient = ingredientListOverlay.getIngredientUnderMouse();
+            if (ingredient != null) {
+                return ingredient;
+            }
+        }
+
+        IBookmarkOverlay bookmarkOverlay = runtime.getBookmarkOverlay();
+        if (bookmarkOverlay != null) {
+            return bookmarkOverlay.getIngredientUnderMouse();
+        }
+
+        return null;
     }
 
     /**
