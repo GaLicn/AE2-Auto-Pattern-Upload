@@ -4,11 +4,11 @@ import com.example.ae2_auto_pattern_upload.tile.TileWirelessTransceiver;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.HashMap;
 
 public final class WirelessTransceiverRegistry {
-    private static final Map<Integer, Map<Long, TileWirelessTransceiver>> MASTERS = new HashMap<>();
+    private static final Map<Long, TileWirelessTransceiver> MASTERS = new HashMap<>();
 
     private WirelessTransceiverRegistry() {
     }
@@ -19,11 +19,9 @@ public final class WirelessTransceiverRegistry {
             return;
         }
 
-        Map<Long, TileWirelessTransceiver> byFrequency =
-                MASTERS.computeIfAbsent(world.provider.getDimension(), ignored -> new HashMap<>());
-        TileWirelessTransceiver current = byFrequency.get(tile.getFrequency());
-        if (current == tile || !isValid(current, world, tile.getFrequency())) {
-            byFrequency.put(tile.getFrequency(), tile);
+        TileWirelessTransceiver current = MASTERS.get(tile.getFrequency());
+        if (current == tile || !isValid(current, tile.getFrequency())) {
+            MASTERS.put(tile.getFrequency(), tile);
         }
     }
 
@@ -33,44 +31,27 @@ public final class WirelessTransceiverRegistry {
             return;
         }
 
-        Map<Long, TileWirelessTransceiver> byFrequency = MASTERS.get(world.provider.getDimension());
-        if (byFrequency == null) {
-            return;
-        }
-
-        TileWirelessTransceiver current = byFrequency.get(tile.getFrequency());
+        TileWirelessTransceiver current = MASTERS.get(tile.getFrequency());
         if (current == tile) {
-            byFrequency.remove(tile.getFrequency());
-        }
-
-        if (byFrequency.isEmpty()) {
-            MASTERS.remove(world.provider.getDimension());
+            MASTERS.remove(tile.getFrequency());
         }
     }
 
     @Nullable
     public static synchronized TileWirelessTransceiver getMaster(World world, long frequency) {
-        Map<Long, TileWirelessTransceiver> byFrequency = MASTERS.get(world.provider.getDimension());
-        if (byFrequency == null) {
-            return null;
-        }
-
-        TileWirelessTransceiver tile = byFrequency.get(frequency);
-        if (!isValid(tile, world, frequency)) {
-            byFrequency.remove(frequency);
-            if (byFrequency.isEmpty()) {
-                MASTERS.remove(world.provider.getDimension());
-            }
+        TileWirelessTransceiver tile = MASTERS.get(frequency);
+        if (!isValid(tile, frequency)) {
+            MASTERS.remove(frequency);
             return null;
         }
 
         return tile;
     }
 
-    private static boolean isValid(@Nullable TileWirelessTransceiver tile, World world, long frequency) {
+    private static boolean isValid(@Nullable TileWirelessTransceiver tile, long frequency) {
         return tile != null
                 && !tile.isInvalid()
-                && tile.getWorld() == world
+                && tile.getWorld() != null
                 && tile.isMasterMode()
                 && tile.getFrequency() == frequency;
     }

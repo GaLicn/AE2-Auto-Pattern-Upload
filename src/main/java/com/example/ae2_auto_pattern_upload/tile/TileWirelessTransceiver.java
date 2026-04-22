@@ -17,7 +17,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ITickable;
 
 public class TileWirelessTransceiver extends AENetworkTile implements ITickable {
-    private static final double MAX_RANGE = 256.0D;
     private static final double IDLE_POWER = 100.0D;
 
     private long frequency = 1L;
@@ -156,12 +155,6 @@ public class TileWirelessTransceiver extends AENetworkTile implements ITickable 
 
         TileWirelessTransceiver master = WirelessTransceiverRegistry.getMaster(this.world, this.frequency);
         if (master == null || master == this || master.isInvalid()) {
-            destroySlaveConnection();
-            return;
-        }
-
-        double distanceSq = master.getPos().distanceSq(this.pos);
-        if (distanceSq > MAX_RANGE * MAX_RANGE) {
             destroySlaveConnection();
             return;
         }

@@ -21,7 +21,6 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class TileLabeledWirelessTransceiver extends AENetworkTile implements ITickable {
-    private static final double MAX_RANGE = 256.0D;
     private static final double IDLE_POWER = 100.0D;
 
     private String label = "";
@@ -200,12 +199,6 @@ public class TileLabeledWirelessTransceiver extends AENetworkTile implements ITi
         TileLabeledWirelessTransceiver master =
                 LabeledWirelessTransceiverRegistry.getMaster(this.world, this.label);
         if (master == null || master == this || master.isInvalid()) {
-            destroySlaveConnection();
-            return;
-        }
-
-        double distanceSq = master.getPos().distanceSq(this.pos);
-        if (distanceSq > MAX_RANGE * MAX_RANGE) {
             destroySlaveConnection();
             return;
         }

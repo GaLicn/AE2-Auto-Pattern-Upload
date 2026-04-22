@@ -16,7 +16,7 @@ import java.util.Set;
 
 public final class LabeledWirelessTransceiverRegistry {
     private static final long CHANNEL_START = 1_000_000L;
-    private static final Map<Integer, Map<String, LabelNetwork>> NETWORKS = new HashMap<>();
+    private static final Map<String, LabelNetwork> NETWORKS = new HashMap<>();
     private static long nextChannel = CHANNEL_START;
 
     private LabeledWirelessTransceiverRegistry() {
@@ -29,12 +29,10 @@ public final class LabeledWirelessTransceiverRegistry {
             return;
         }
 
-        Map<String, LabelNetwork> byLabel =
-                NETWORKS.computeIfAbsent(world.provider.getDimension(), ignored -> new HashMap<>());
-        LabelNetwork network = byLabel.get(label);
+        LabelNetwork network = NETWORKS.get(label);
         if (network == null) {
             network = new LabelNetwork(nextChannel++);
-            byLabel.put(label, network);
+            NETWORKS.put(label, network);
         }
         network.endpoints.add(tile);
     }
@@ -50,23 +48,14 @@ public final class LabeledWirelessTransceiverRegistry {
             return;
         }
 
-        Map<String, LabelNetwork> byLabel = NETWORKS.get(world.provider.getDimension());
-        if (byLabel == null) {
-            return;
-        }
-
-        LabelNetwork network = byLabel.get(label);
+        LabelNetwork network = NETWORKS.get(label);
         if (network == null) {
             return;
         }
 
-        network.endpoints.removeIf(endpoint -> endpoint == tile || !isValid(endpoint, world, label));
+        network.endpoints.removeIf(endpoint -> endpoint == tile || !isValid(endpoint, label));
         if (network.endpoints.isEmpty()) {
-            byLabel.remove(label);
-        }
-
-        if (byLabel.isEmpty()) {
-            NETWORKS.remove(world.provider.getDimension());
+            NETWORKS.remove(label);
         }
     }
 
@@ -77,12 +66,7 @@ public final class LabeledWirelessTransceiverRegistry {
             return null;
         }
 
-        Map<String, LabelNetwork> byLabel = NETWORKS.get(world.provider.getDimension());
-        if (byLabel == null) {
-            return null;
-        }
-
-        LabelNetwork network = byLabel.get(label);
+        LabelNetwork network = NETWORKS.get(label);
         if (network == null) {
             return null;
         }
@@ -92,12 +76,13 @@ public final class LabeledWirelessTransceiverRegistry {
         Iterator<TileLabeledWirelessTransceiver> iterator = network.endpoints.iterator();
         while (iterator.hasNext()) {
             TileLabeledWirelessTransceiver endpoint = iterator.next();
-            if (!isValid(endpoint, world, label)) {
+            if (!isValid(endpoint, label)) {
                 iterator.remove();
                 continue;
             }
 
-            long pos = endpoint.getPos().toLong();
+            int dimension = endpoint.getWorld() == null ? Integer.MAX_VALUE : endpoint.getWorld().provider.getDimension();
+            long pos = (((long) dimension) << 32) ^ endpoint.getPos().toLong();
             if (best == null || pos < bestPos) {
                 best = endpoint;
                 bestPos = pos;
@@ -105,10 +90,7 @@ public final class LabeledWirelessTransceiverRegistry {
         }
 
         if (network.endpoints.isEmpty()) {
-            byLabel.remove(label);
-            if (byLabel.isEmpty()) {
-                NETWORKS.remove(world.provider.getDimension());
-            }
+            NETWORKS.remove(label);
         }
 
         return best;
@@ -120,12 +102,7 @@ public final class LabeledWirelessTransceiverRegistry {
             return 0;
         }
 
-        Map<String, LabelNetwork> byLabel = NETWORKS.get(world.provider.getDimension());
-        if (byLabel == null) {
-            return 0;
-        }
-
-        LabelNetwork network = byLabel.get(label);
+        LabelNetwork network = NETWORKS.get(label);
         if (network == null) {
             return 0;
         }
@@ -134,7 +111,7 @@ public final class LabeledWirelessTransceiverRegistry {
         Iterator<TileLabeledWirelessTransceiver> iterator = network.endpoints.iterator();
         while (iterator.hasNext()) {
             TileLabeledWirelessTransceiver endpoint = iterator.next();
-            if (!isValid(endpoint, world, label)) {
+            if (!isValid(endpoint, label)) {
                 iterator.remove();
                 continue;
             }
@@ -142,27 +119,23 @@ public final class LabeledWirelessTransceiverRegistry {
         }
 
         if (network.endpoints.isEmpty()) {
-            byLabel.remove(label);
-            if (byLabel.isEmpty()) {
-                NETWORKS.remove(world.provider.getDimension());
-            }
+            NETWORKS.remove(label);
         }
 
         return count;
     }
 
     public static synchronized List<LabelNetworkSnapshot> listNetworks(World world) {
-        Map<String, LabelNetwork> byLabel = NETWORKS.get(world.provider.getDimension());
-        if (byLabel == null) {
+        if (NETWORKS.isEmpty()) {
             return Collections.emptyList();
         }
 
         List<LabelNetworkSnapshot> snapshots = new ArrayList<>();
-        Iterator<Map.Entry<String, LabelNetwork>> iterator = byLabel.entrySet().iterator();
+        Iterator<Map.Entry<String, LabelNetwork>> iterator = NETWORKS.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, LabelNetwork> entry = iterator.next();
             LabelNetwork network = entry.getValue();
-            network.endpoints.removeIf(endpoint -> !isValid(endpoint, world, entry.getKey()));
+            network.endpoints.removeIf(endpoint -> !isValid(endpoint, entry.getKey()));
             if (network.endpoints.isEmpty()) {
                 iterator.remove();
                 continue;
@@ -171,9 +144,6 @@ public final class LabeledWirelessTransceiverRegistry {
         }
 
         snapshots.sort(Comparator.comparingLong(LabelNetworkSnapshot::getChannel));
-        if (byLabel.isEmpty()) {
-            NETWORKS.remove(world.provider.getDimension());
-        }
         return snapshots;
     }
 
@@ -183,23 +153,14 @@ public final class LabeledWirelessTransceiverRegistry {
             return;
         }
 
-        Map<String, LabelNetwork> byLabel = NETWORKS.get(world.provider.getDimension());
-        if (byLabel == null) {
-            return;
-        }
-
-        LabelNetwork network = byLabel.remove(label);
+        LabelNetwork network = NETWORKS.remove(label);
         if (network == null) {
             return;
         }
 
         List<TileLabeledWirelessTransceiver> endpoints = new ArrayList<>(network.endpoints);
-        if (byLabel.isEmpty()) {
-            NETWORKS.remove(world.provider.getDimension());
-        }
-
         for (TileLabeledWirelessTransceiver endpoint : endpoints) {
-            if (isValid(endpoint, world, label)) {
+            if (isValid(endpoint, label)) {
                 endpoint.clearLabel();
             }
         }
@@ -216,11 +177,10 @@ public final class LabeledWirelessTransceiverRegistry {
 
     private static boolean isValid(
             @Nullable TileLabeledWirelessTransceiver tile,
-            World world,
             String label) {
         return tile != null
                 && !tile.isInvalid()
-                && tile.getWorld() == world
+                && tile.getWorld() != null
                 && label.equals(tile.getLabelKey());
     }
 
