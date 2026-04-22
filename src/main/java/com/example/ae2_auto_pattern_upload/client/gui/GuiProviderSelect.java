@@ -73,7 +73,10 @@ public class GuiProviderSelect extends GuiScreen {
         for (int i = 0; i < names.size(); i++) {
             String name = names.get(i);
             long id = ids.get(i);
-            int slots = emptySlots.get(i);
+            int slots = Math.max(0, emptySlots.get(i));
+            if (slots <= 0) {
+                continue;
+            }
 
             GroupEntry entry = map.computeIfAbsent(name, k -> {
                 GroupEntry ge = new GroupEntry();
@@ -81,9 +84,9 @@ public class GuiProviderSelect extends GuiScreen {
                 return ge;
             });
             entry.count++;
-            entry.totalSlots += Math.max(0, slots);
+            entry.totalSlots += slots;
             if (slots > entry.bestSlots || entry.id == 0L) {
-                entry.bestSlots = Math.max(0, slots);
+                entry.bestSlots = slots;
                 entry.id = id;
             }
         }
