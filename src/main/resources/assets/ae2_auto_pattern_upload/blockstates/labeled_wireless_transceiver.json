@@ -1,5 +1,8 @@
 {
   "variants": {
+    "inventory": {
+      "model": "ae2_auto_pattern_upload:labeled_wireless_transceiver"
+    },
     "state=false": {
       "model": "ae2_auto_pattern_upload:wirelesstransceiver/lable_wireless_transceiver_off"
     },

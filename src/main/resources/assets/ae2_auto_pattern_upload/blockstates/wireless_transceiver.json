@@ -1,5 +1,6 @@
 {
   "variants": {
+    "inventory": { "model": "ae2_auto_pattern_upload:wireless_transceiver" },
     "state=0": { "model": "ae2_auto_pattern_upload:wirelesstransceiver/wireless_transceiver_0" },
     "state=1": { "model": "ae2_auto_pattern_upload:wirelesstransceiver/wireless_transceiver_1" },
     "state=2": { "model": "ae2_auto_pattern_upload:wirelesstransceiver/wireless_transceiver_2" },
