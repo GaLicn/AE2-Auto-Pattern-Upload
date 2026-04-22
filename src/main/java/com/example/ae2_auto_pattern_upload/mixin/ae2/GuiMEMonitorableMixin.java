@@ -8,6 +8,8 @@ import mezz.jei.api.IIngredientListOverlay;
 import mezz.jei.api.ingredients.IIngredientHelper;
 import mezz.jei.api.ingredients.IIngredientRegistry;
 import mezz.jei.api.IJeiRuntime;
+import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import org.lwjgl.input.Keyboard;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,7 +21,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.io.IOException;
 
 /**
- * Mixin到AE2的终端GUI，实现按F键将JEI/HEI物品列表或HEI书签中的道具名称写入搜索框
+ * Mixin到AE2的终端GUI，实现按F键将悬停道具名称写入搜索框。
+ * 优先读取JEI/HEI物品列表与书签，取不到时再回退到当前GUI悬停槽位中的物品。
  */
 @Mixin(value = GuiMEMonitorable.class)
 public abstract class GuiMEMonitorableMixin {
@@ -50,14 +53,8 @@ public abstract class GuiMEMonitorableMixin {
             return;
         }
 
-        // 获取JEI运行时
-        IJeiRuntime runtime = Internal.getRuntime();
-        if (runtime == null) {
-            return;
-        }
-
-        // 先检查主物品列表，再检查HEI书签列表
-        Object ingredientValue = getIngredientUnderMouse(runtime);
+        // 先检查JEI/HEI覆盖层，再回退到当前GUI悬停槽位
+        Object ingredientValue = getHoveredIngredient();
         if (ingredientValue == null) {
             return;
         }
@@ -82,6 +79,26 @@ public abstract class GuiMEMonitorableMixin {
 
         // 阻止原始方法继续执行，避免额外输入 "f"
         ci.cancel();
+    }
+
+    private Object getHoveredIngredient() {
+        IJeiRuntime runtime = Internal.getRuntime();
+        if (runtime != null) {
+            Object ingredient = getIngredientUnderMouse(runtime);
+            if (ingredient != null) {
+                return ingredient;
+            }
+        }
+
+        Slot hoveredSlot = ((GuiContainer) (Object) this).getSlotUnderMouse();
+        if (hoveredSlot != null && hoveredSlot.getHasStack()) {
+            ItemStack stack = hoveredSlot.getStack();
+            if (!stack.isEmpty()) {
+                return stack;
+            }
+        }
+
+        return null;
     }
 
     private Object getIngredientUnderMouse(IJeiRuntime runtime) {
