@@ -4,11 +4,18 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.crafting.ICraftingProvider;
+import appeng.helpers.IInterfaceHost;
+import appeng.parts.misc.PartInterface;
+import appeng.tile.misc.TileInterface;
 import io.netty.buffer.ByteBuf;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraftforge.items.IItemHandler;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * C2S: 请求可用供应器列表
@@ -113,7 +120,14 @@ public class RequestProvidersListPacket implements IMessage {
                     return null;
                 }
                 
-                // 遍历网络中的所有供应器（ICraftingProvider）
+                Set<Long> seenProviderIds = new HashSet<>();
+
+                // 先按 AE2 原生接口终端的方式，显式收集 block / part 形态的接口。
+                // 这样可以稳定拿到 part 接口，并使用 duality 中的终端名与真实样板空槽数。
+                collectInterfaceHosts(grid.getMachines(TileInterface.class), ids, names, slots, seenProviderIds);
+                collectInterfaceHosts(grid.getMachines(PartInterface.class), ids, names, slots, seenProviderIds);
+
+                // 再回退遍历网络中的其他供应器（ICraftingProvider）
                 for (Class<? extends IGridHost> hostClass : grid.getMachinesClasses()) {
                     if (!ICraftingProvider.class.isAssignableFrom(hostClass)) continue;
                     
@@ -123,10 +137,11 @@ public class RequestProvidersListPacket implements IMessage {
                         Object machine = machineNode.getMachine();
                         if (!(machine instanceof ICraftingProvider)) continue;
                         
-                        ICraftingProvider provider = (ICraftingProvider) machine;
-                        
-                        // 获取供应器 ID（使用 hashCode 作为唯一标识）和名称
                         long providerId = (long) machineNode.hashCode();
+                        if (!seenProviderIds.add(providerId)) {
+                            continue;
+                        }
+
                         String providerName = "Crafting Provider";  // 默认名称
                         
                         // 尝试获取更好的名称
@@ -139,7 +154,7 @@ public class RequestProvidersListPacket implements IMessage {
                         
                         ids.add(providerId);
                         names.add(ProvidersListS2CPacket.normalizeProviderName(providerName));
-                        slots.add(1);  // 暂时设为 1，后续可以改进
+                        slots.add(getEmptyPatternSlots(machine));
                     }
                 }
                 
@@ -153,6 +168,58 @@ public class RequestProvidersListPacket implements IMessage {
             }
             
             return null;
+        }
+
+        private static void collectInterfaceHosts(Iterable<IGridNode> machineNodes,
+                                                  java.util.List<Long> ids,
+                                                  java.util.List<String> names,
+                                                  java.util.List<Integer> slots,
+                                                  Set<Long> seenProviderIds) {
+            if (machineNodes == null) {
+                return;
+            }
+
+            for (IGridNode machineNode : machineNodes) {
+                if (machineNode == null || !machineNode.isActive()) {
+                    continue;
+                }
+
+                Object machine = machineNode.getMachine();
+                if (!(machine instanceof IInterfaceHost)) {
+                    continue;
+                }
+
+                IInterfaceHost interfaceHost = (IInterfaceHost) machine;
+                long providerId = (long) machineNode.hashCode();
+                if (!seenProviderIds.add(providerId)) {
+                    continue;
+                }
+
+                String providerName = interfaceHost.getInterfaceDuality().getTermName();
+                ids.add(providerId);
+                names.add(ProvidersListS2CPacket.normalizeProviderName(providerName));
+                slots.add(getEmptyPatternSlots(interfaceHost));
+            }
+        }
+
+        private static int getEmptyPatternSlots(Object provider) {
+            try {
+                java.lang.reflect.Method getInventoryByNameMethod = provider.getClass().getMethod("getInventoryByName", String.class);
+                Object patternsObj = getInventoryByNameMethod.invoke(provider, "patterns");
+                if (patternsObj instanceof IItemHandler) {
+                    IItemHandler patterns = (IItemHandler) patternsObj;
+                    int emptySlots = 0;
+                    for (int i = 0; i < patterns.getSlots(); i++) {
+                        if (patterns.getStackInSlot(i).isEmpty()) {
+                            emptySlots++;
+                        }
+                    }
+                    return emptySlots;
+                }
+            } catch (Exception ignored) {
+            }
+
+            return 0;
         }
     }
 }
