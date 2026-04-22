@@ -15,10 +15,12 @@ public final class RegistrationHandler {
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
         event.getRegistry().register(ModBlocks.WIRELESS_TRANSCEIVER);
+        event.getRegistry().register(ModBlocks.LABELED_WIRELESS_TRANSCEIVER);
     }
 
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event) {
         event.getRegistry().register(ModItems.WIRELESS_TRANSCEIVER);
+        event.getRegistry().register(ModItems.LABELED_WIRELESS_TRANSCEIVER);
     }
 }

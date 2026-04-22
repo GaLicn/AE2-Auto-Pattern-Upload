@@ -1,3 +1,6 @@
 {
-  "parent": "ae2_auto_pattern_upload:block/wirelesstransceiver/wireless_transceiver_5"
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "ae2_auto_pattern_upload:block/wireless_transceiver/wireless_transceiver_4"
+  }
 }

@@ -1,6 +1,7 @@
 package com.example.ae2_auto_pattern_upload.proxy;
 
 import com.example.ae2_auto_pattern_upload.network.ProvidersListS2CPacket;
+import com.example.ae2_auto_pattern_upload.network.LabelNetworkListS2CPacket;
 
 public class CommonProxy {
     public void preInit() {
@@ -8,6 +9,10 @@ public class CommonProxy {
     }
 
     public void handleProvidersListS2C(ProvidersListS2CPacket message) {
+        // Server side no-op.
+    }
+
+    public void handleLabelNetworkListS2C(LabelNetworkListS2CPacket message) {
         // Server side no-op.
     }
 }

@@ -1,9 +1,12 @@
 package com.example.ae2_auto_pattern_upload.proxy;
 
 import com.example.ae2_auto_pattern_upload.init.ModItems;
+import com.example.ae2_auto_pattern_upload.client.gui.GuiLabeledWirelessTransceiver;
 import com.example.ae2_auto_pattern_upload.client.gui.GuiProviderSelect;
+import com.example.ae2_auto_pattern_upload.network.LabelNetworkListS2CPacket;
 import com.example.ae2_auto_pattern_upload.network.ProvidersListS2CPacket;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.relauncher.Side;
@@ -17,6 +20,10 @@ public class ClientProxy extends CommonProxy {
                 ModItems.WIRELESS_TRANSCEIVER,
                 0,
                 new ModelResourceLocation(ModItems.WIRELESS_TRANSCEIVER.getRegistryName(), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(
+                ModItems.LABELED_WIRELESS_TRANSCEIVER,
+                0,
+                new ModelResourceLocation(ModItems.LABELED_WIRELESS_TRANSCEIVER.getRegistryName(), "inventory"));
     }
 
     @Override
@@ -24,6 +31,27 @@ public class ClientProxy extends CommonProxy {
         Minecraft mc = Minecraft.getMinecraft();
         mc.addScheduledTask(() -> {
             mc.displayGuiScreen(new GuiProviderSelect(mc.currentScreen, message.getIds(), message.getNames(), message.getEmptySlots()));
+        });
+	    }
+
+    @Override
+    public void handleLabelNetworkListS2C(LabelNetworkListS2CPacket message) {
+        Minecraft mc = Minecraft.getMinecraft();
+        mc.addScheduledTask(() -> {
+            GuiScreen currentScreen = mc.currentScreen;
+            if (currentScreen instanceof GuiLabeledWirelessTransceiver) {
+                GuiLabeledWirelessTransceiver gui = (GuiLabeledWirelessTransceiver) currentScreen;
+                if (gui.isFor(message.getPos())) {
+                    gui.updateData(
+                            message.getLabels(),
+                            message.getChannels(),
+                            message.getCurrentLabel(),
+                            message.getCurrentOwner(),
+                            message.getOnlineCount(),
+                            message.getUsedChannels(),
+                            message.getMaxChannels());
+                }
+            }
         });
     }
 }

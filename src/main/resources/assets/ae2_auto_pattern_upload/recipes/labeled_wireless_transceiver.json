@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "pep",
+    "pwp",
+    "pep"
+  ],
+  "key": {
+    "p": {
+      "item": "minecraft:paper"
+    },
+    "e": {
+      "item": "minecraft:emerald"
+    },
+    "w": {
+      "item": "ae2_auto_pattern_upload:wireless_transceiver"
+    }
+  },
+  "result": {
+    "item": "ae2_auto_pattern_upload:labeled_wireless_transceiver"
+  }
+}

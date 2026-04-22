@@ -34,5 +34,23 @@ public class ModNetwork {
             UploadPatternPacket.class,
             packetId++,
             Side.SERVER);
+
+        CHANNEL.registerMessage(
+            LabelNetworkListC2SPacket.Handler.class,
+            LabelNetworkListC2SPacket.class,
+            packetId++,
+            Side.SERVER);
+
+        CHANNEL.registerMessage(
+            LabelNetworkListS2CPacket.Handler.class,
+            LabelNetworkListS2CPacket.class,
+            packetId++,
+            Side.CLIENT);
+
+        CHANNEL.registerMessage(
+            LabelNetworkActionC2SPacket.Handler.class,
+            LabelNetworkActionC2SPacket.class,
+            packetId++,
+            Side.SERVER);
     }
 }
