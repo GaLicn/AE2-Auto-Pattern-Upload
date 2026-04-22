@@ -1,5 +1,6 @@
 package com.example.ae2_auto_pattern_upload;
 
+import com.example.ae2_auto_pattern_upload.init.ModTileEntities;
 import com.example.ae2_auto_pattern_upload.network.ModNetwork;
 import com.example.ae2_auto_pattern_upload.proxy.CommonProxy;
 import net.minecraftforge.fml.common.Mod;
@@ -21,8 +22,9 @@ public class ExampleMod {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         LOGGER.info("Hello From {}!", Tags.MOD_NAME);
-        // 注册网络包
+        ModTileEntities.register();
         ModNetwork.registerPackets();
+        PROXY.preInit();
     }
 
 }

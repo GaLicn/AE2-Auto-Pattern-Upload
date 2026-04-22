@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "state=false": {
+      "model": "ae2_auto_pattern_upload:wirelesstransceiver/lable_wireless_transceiver_off"
+    },
+    "state=true": {
+      "model": "ae2_auto_pattern_upload:wirelesstransceiver/lable_wireless_transceiver_on"
+    }
+  }
+}

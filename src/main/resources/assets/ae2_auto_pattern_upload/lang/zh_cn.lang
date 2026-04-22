@@ -28,3 +28,14 @@ ae2_auto_pattern_upload.info.enter_mapping_delete=请输入映射名称后再删
 # Mixin Messages
 ae2_auto_pattern_upload.mixin.recipe_category_captured=捕获 JEI 配方类别: %s
 ae2_auto_pattern_upload.mixin.mapped_keyword=映射关键字: %s
+
+# Wireless Transceiver
+tile.ae2_auto_pattern_upload.wireless_transceiver.name=无线收发器
+message.ae2_auto_pattern_upload.wireless_transceiver.frequency=频率: %s
+message.ae2_auto_pattern_upload.wireless_transceiver.mode=模式: %s
+message.ae2_auto_pattern_upload.wireless_transceiver.mode.master=主端
+message.ae2_auto_pattern_upload.wireless_transceiver.mode.slave=从端
+tooltip.ae2_auto_pattern_upload.wireless_transceiver.1=同频的主端与从端之间可建立无线 AE 网络桥接
+tooltip.ae2_auto_pattern_upload.wireless_transceiver.2=右键: 切换主端 / 从端
+tooltip.ae2_auto_pattern_upload.wireless_transceiver.3=潜行右键: 频率 +1；潜行左键: 频率 -1
+tooltip.ae2_auto_pattern_upload.wireless_transceiver.4=手持红石火把或木棍时，频率步长改为 10

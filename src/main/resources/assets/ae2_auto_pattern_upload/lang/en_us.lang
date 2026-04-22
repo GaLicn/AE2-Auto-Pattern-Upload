@@ -28,3 +28,14 @@ ae2_auto_pattern_upload.info.enter_mapping_delete=Please enter a mapping name be
 # Mixin Messages
 ae2_auto_pattern_upload.mixin.recipe_category_captured=Captured JEI recipe category: %s
 ae2_auto_pattern_upload.mixin.mapped_keyword=Mapped keyword: %s
+
+# Wireless Transceiver
+tile.ae2_auto_pattern_upload.wireless_transceiver.name=Wireless Transceiver
+message.ae2_auto_pattern_upload.wireless_transceiver.frequency=Frequency: %s
+message.ae2_auto_pattern_upload.wireless_transceiver.mode=Mode: %s
+message.ae2_auto_pattern_upload.wireless_transceiver.mode.master=Master
+message.ae2_auto_pattern_upload.wireless_transceiver.mode.slave=Slave
+tooltip.ae2_auto_pattern_upload.wireless_transceiver.1=Wireless AE bridge between master and slave nodes on the same frequency
+tooltip.ae2_auto_pattern_upload.wireless_transceiver.2=Right-click: toggle master / slave mode
+tooltip.ae2_auto_pattern_upload.wireless_transceiver.3=Sneak + right-click: frequency +1; sneak + left-click: frequency -1
+tooltip.ae2_auto_pattern_upload.wireless_transceiver.4=Holding a redstone torch or stick changes the frequency step to 10

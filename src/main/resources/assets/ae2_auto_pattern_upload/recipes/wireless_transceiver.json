@@ -1,0 +1,26 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "iei",
+    "iwi",
+    "igi"
+  ],
+  "key": {
+    "i": {
+      "type": "forge:ore_dict",
+      "ore": "ingotIron"
+    },
+    "e": {
+      "item": "minecraft:ender_pearl"
+    },
+    "w": {
+      "item": "appliedenergistics2:wireless_access_point"
+    },
+    "g": {
+      "item": "minecraft:gold_ingot"
+    }
+  },
+  "result": {
+    "item": "ae2_auto_pattern_upload:wireless_transceiver"
+  }
+}
