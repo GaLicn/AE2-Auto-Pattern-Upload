@@ -49,4 +49,7 @@ dependencies {
     //通用终端
     implementation rfg.deobf("curse.maven:ae2uel-wireless-universal-terminal-1196988:7760560")
 
+    //饰品槽
+    implementation files('libs/Baubles-1.12-1.5.2.jar')
+
 }
