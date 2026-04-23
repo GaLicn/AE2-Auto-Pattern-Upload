@@ -1,19 +1,15 @@
 package com.example.ae2_auto_pattern_upload.client.event;
 
 import com.example.ae2_auto_pattern_upload.network.ModNetwork;
-import com.example.ae2_auto_pattern_upload.network.OpenCraftAmountFromBookmarkPacket;
-import com.example.ae2_auto_pattern_upload.network.PullBookmarkItemPacket;
 import com.example.ae2_auto_pattern_upload.network.RequestProvidersListPacket;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.item.ItemStack;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import org.lwjgl.input.Mouse;
 
 /**
  * 使用事件监听器在编码终端添加上传按钮
@@ -22,9 +18,7 @@ import org.lwjgl.input.Mouse;
 @Mod.EventBusSubscriber(Side.CLIENT)
 public class GuiScreenEventHandler {
 
-    private static final long BOOKMARK_MIDDLE_CLICK_COOLDOWN_MS = 200L;
     private static GuiButton uploadBtn = null;
-    private static long lastBookmarkMiddleClickAt = 0L;
 
     /**
      * 检查给定的GUI类名是否是样板终端
@@ -88,55 +82,4 @@ public class GuiScreenEventHandler {
             event.setCanceled(true);
         }
     }
-
-    @SubscribeEvent
-    public static void onGuiMouseInput(GuiScreenEvent.MouseInputEvent.Pre event) {
-        if (!Mouse.getEventButtonState()) {
-            return;
-        }
-
-        ItemStack bookmarkStack = getHoveredBookmarkStack();
-        if (bookmarkStack.isEmpty()) {
-            return;
-        }
-
-        long now = System.currentTimeMillis();
-        if (now - lastBookmarkMiddleClickAt < BOOKMARK_MIDDLE_CLICK_COOLDOWN_MS) {
-            return;
-        }
-
-        if (Mouse.getEventButton() == 2) {
-            lastBookmarkMiddleClickAt = now;
-            ModNetwork.CHANNEL.sendToServer(new OpenCraftAmountFromBookmarkPacket(bookmarkStack));
-            event.setCanceled(true);
-            return;
-        }
-
-        if (Mouse.getEventButton() == 0 && GuiScreen.isShiftKeyDown()) {
-            lastBookmarkMiddleClickAt = now;
-            ModNetwork.CHANNEL.sendToServer(new PullBookmarkItemPacket(bookmarkStack));
-            event.setCanceled(true);
-        }
-    }
-
-    private static ItemStack getHoveredBookmarkStack() {
-        try {
-            Class<?> internalClass = Class.forName("mezz.jei.Internal");
-            Object runtime = internalClass.getMethod("getRuntime").invoke(null);
-            if (runtime == null) {
-                return ItemStack.EMPTY;
-            }
-
-            Object bookmarkOverlay = runtime.getClass().getMethod("getBookmarkOverlay").invoke(runtime);
-            if (bookmarkOverlay == null) {
-                return ItemStack.EMPTY;
-            }
-
-            Object ingredient = bookmarkOverlay.getClass().getMethod("getIngredientUnderMouse").invoke(bookmarkOverlay);
-            return ingredient instanceof ItemStack ? (ItemStack) ingredient : ItemStack.EMPTY;
-        } catch (Throwable ignored) {
-            return ItemStack.EMPTY;
-        }
-    }
-
 }

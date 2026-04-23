@@ -38,10 +38,10 @@ dependencies {
     implementation rfg.deobf('curse.maven:ae2-extended-life-570458:6302098')
 
     //JEI
-    implementation rfg.deobf("curse.maven:jei-238222:5846804")
+    //implementation rfg.deobf("curse.maven:jei-238222:5846804")
 
     //HEI
-    //implementation "curse.maven:had-enough-items-557549:7938914"
+    implementation "curse.maven:had-enough-items-557549:7938914"
 
     //AE2 Fluid Crafting
     implementation rfg.deobf("curse.maven:ae2-fluid-crafting-rework-623955:5751930")

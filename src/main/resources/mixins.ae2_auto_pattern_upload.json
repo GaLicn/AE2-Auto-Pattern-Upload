@@ -8,6 +8,7 @@
 	"mixins": [],
 	"server": [],
 	"client": [
+        "jei.BookmarkOverlayMixin",
         "jei.RecipeTransferHandlerMixin",
 	    "jei.RecipeTransferUtilMixin",
 	    "ae2.GuiMEMonitorableMixin"
