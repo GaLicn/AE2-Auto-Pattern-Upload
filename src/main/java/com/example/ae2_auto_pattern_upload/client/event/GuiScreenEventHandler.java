@@ -2,6 +2,7 @@ package com.example.ae2_auto_pattern_upload.client.event;
 
 import com.example.ae2_auto_pattern_upload.network.ModNetwork;
 import com.example.ae2_auto_pattern_upload.network.OpenCraftAmountFromBookmarkPacket;
+import com.example.ae2_auto_pattern_upload.network.PullBookmarkItemPacket;
 import com.example.ae2_auto_pattern_upload.network.RequestProvidersListPacket;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -90,7 +91,7 @@ public class GuiScreenEventHandler {
 
     @SubscribeEvent
     public static void onGuiMouseInput(GuiScreenEvent.MouseInputEvent.Pre event) {
-        if (!Mouse.getEventButtonState() || Mouse.getEventButton() != 2) {
+        if (!Mouse.getEventButtonState()) {
             return;
         }
 
@@ -104,9 +105,18 @@ public class GuiScreenEventHandler {
             return;
         }
 
-        lastBookmarkMiddleClickAt = now;
-        ModNetwork.CHANNEL.sendToServer(new OpenCraftAmountFromBookmarkPacket(bookmarkStack));
-        event.setCanceled(true);
+        if (Mouse.getEventButton() == 2) {
+            lastBookmarkMiddleClickAt = now;
+            ModNetwork.CHANNEL.sendToServer(new OpenCraftAmountFromBookmarkPacket(bookmarkStack));
+            event.setCanceled(true);
+            return;
+        }
+
+        if (Mouse.getEventButton() == 0 && GuiScreen.isShiftKeyDown()) {
+            lastBookmarkMiddleClickAt = now;
+            ModNetwork.CHANNEL.sendToServer(new PullBookmarkItemPacket(bookmarkStack));
+            event.setCanceled(true);
+        }
     }
 
     private static ItemStack getHoveredBookmarkStack() {

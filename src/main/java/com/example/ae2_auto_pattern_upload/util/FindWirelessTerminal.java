@@ -102,6 +102,32 @@ public class FindWirelessTerminal {
         return node == null ? null : node.getGrid();
     }
 
+    @Nullable
+    public static IActionHost getWirelessTerminalActionHost(ItemStack terminal) {
+        IWirelessTermRegistry registry = AEApi.instance().registries().wireless();
+        if (!isWirelessTerminal(terminal, registry)) {
+            return null;
+        }
+
+        IWirelessTermHandler handler = registry.getWirelessTerminalHandler(terminal);
+        if (handler == null) {
+            return null;
+        }
+
+        String encryptionKey = handler.getEncryptionKey(terminal);
+        if (encryptionKey == null || encryptionKey.isEmpty()) {
+            return null;
+        }
+
+        try {
+            long parsedKey = Long.parseLong(encryptionKey);
+            ILocatable locatable = AEApi.instance().registries().locatable().getLocatableBy(parsedKey);
+            return locatable instanceof IActionHost ? (IActionHost) locatable : null;
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
     private static ItemStack findInList(NonNullList<ItemStack> stacks, IWirelessTermRegistry registry) {
         for (ItemStack stack : stacks) {
             if (isWirelessTerminal(stack, registry)) {
@@ -145,32 +171,6 @@ public class FindWirelessTerminal {
         }
 
         return null;
-    }
-
-    @Nullable
-    private static IActionHost getWirelessTerminalActionHost(ItemStack terminal) {
-        IWirelessTermRegistry registry = AEApi.instance().registries().wireless();
-        if (!isWirelessTerminal(terminal, registry)) {
-            return null;
-        }
-
-        IWirelessTermHandler handler = registry.getWirelessTerminalHandler(terminal);
-        if (handler == null) {
-            return null;
-        }
-
-        String encryptionKey = handler.getEncryptionKey(terminal);
-        if (encryptionKey == null || encryptionKey.isEmpty()) {
-            return null;
-        }
-
-        try {
-            long parsedKey = Long.parseLong(encryptionKey);
-            ILocatable locatable = AEApi.instance().registries().locatable().getLocatableBy(parsedKey);
-            return locatable instanceof IActionHost ? (IActionHost) locatable : null;
-        } catch (NumberFormatException ignored) {
-            return null;
-        }
     }
 
     private static boolean isWirelessTerminal(ItemStack stack, IWirelessTermRegistry registry) {

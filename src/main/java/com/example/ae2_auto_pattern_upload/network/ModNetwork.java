@@ -58,5 +58,11 @@ public class ModNetwork {
             OpenCraftAmountFromBookmarkPacket.class,
             packetId++,
             Side.SERVER);
+
+        CHANNEL.registerMessage(
+            PullBookmarkItemPacket.Handler.class,
+            PullBookmarkItemPacket.class,
+            packetId++,
+            Side.SERVER);
     }
 }
