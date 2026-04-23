@@ -46,4 +46,7 @@ dependencies {
     //AE2 Fluid Crafting
     implementation rfg.deobf("curse.maven:ae2-fluid-crafting-rework-623955:5751930")
 
+    //通用终端
+    implementation rfg.deobf("curse.maven:ae2uel-wireless-universal-terminal-1196988:7760560")
+
 }
