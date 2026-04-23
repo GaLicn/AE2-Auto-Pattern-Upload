@@ -53,3 +53,7 @@ gui.ae2_auto_pattern_upload.labeled_wireless.current_label=当前标签
 gui.ae2_auto_pattern_upload.labeled_wireless.current_owner=所有者
 gui.ae2_auto_pattern_upload.labeled_wireless.online_count=在线数
 gui.ae2_auto_pattern_upload.labeled_wireless.channels=频道
+message.ae2_auto_pattern_upload.bookmark_autocraft.no_terminal=未找到可用于下单的无线终端
+message.ae2_auto_pattern_upload.bookmark_autocraft.not_linked=无线终端未绑定到可用网络
+message.ae2_auto_pattern_upload.bookmark_autocraft.no_power=无线终端电量不足
+message.ae2_auto_pattern_upload.bookmark_autocraft.not_craftable=该 HEI 书签道具在当前无线网络中不可合成

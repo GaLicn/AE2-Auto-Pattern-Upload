@@ -53,3 +53,7 @@ gui.ae2_auto_pattern_upload.labeled_wireless.current_label=Current Label
 gui.ae2_auto_pattern_upload.labeled_wireless.current_owner=Owner
 gui.ae2_auto_pattern_upload.labeled_wireless.online_count=Online
 gui.ae2_auto_pattern_upload.labeled_wireless.channels=Channels
+message.ae2_auto_pattern_upload.bookmark_autocraft.no_terminal=No wireless terminal available for crafting
+message.ae2_auto_pattern_upload.bookmark_autocraft.not_linked=The wireless terminal is not linked to an available network
+message.ae2_auto_pattern_upload.bookmark_autocraft.no_power=The wireless terminal does not have enough power
+message.ae2_auto_pattern_upload.bookmark_autocraft.not_craftable=This HEI bookmark item is not craftable in the current wireless network

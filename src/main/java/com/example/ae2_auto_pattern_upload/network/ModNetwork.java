@@ -52,5 +52,11 @@ public class ModNetwork {
             LabelNetworkActionC2SPacket.class,
             packetId++,
             Side.SERVER);
+
+        CHANNEL.registerMessage(
+            OpenCraftAmountFromBookmarkPacket.Handler.class,
+            OpenCraftAmountFromBookmarkPacket.class,
+            packetId++,
+            Side.SERVER);
     }
 }

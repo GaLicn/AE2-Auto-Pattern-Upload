@@ -20,6 +20,49 @@ public class FindWirelessTerminal {
     private FindWirelessTerminal() {
     }
 
+    public static final class WirelessTerminalContext {
+        private final ItemStack terminalStack;
+        private final int slot;
+        private final boolean baubleSlot;
+
+        private WirelessTerminalContext(ItemStack terminalStack, int slot, boolean baubleSlot) {
+            this.terminalStack = terminalStack;
+            this.slot = slot;
+            this.baubleSlot = baubleSlot;
+        }
+
+        public ItemStack getTerminalStack() {
+            return terminalStack;
+        }
+
+        public int getSlot() {
+            return slot;
+        }
+
+        public boolean isBaubleSlot() {
+            return baubleSlot;
+        }
+    }
+
+    @Nullable
+    public static WirelessTerminalContext findOpenableWirelessTerminal(EntityPlayer player) {
+        if (player == null) {
+            return null;
+        }
+
+        IWirelessTermRegistry registry = AEApi.instance().registries().wireless();
+        if (registry == null) {
+            return null;
+        }
+
+        WirelessTerminalContext mainInventoryContext = findContextInList(player.inventory.mainInventory, registry, false);
+        if (mainInventoryContext != null) {
+            return mainInventoryContext;
+        }
+
+        return findContextInBaubles(player, registry);
+    }
+
     public static ItemStack findWirelessTerminalItem(EntityPlayer player) {
         if (player == null) {
             return ItemStack.EMPTY;
@@ -30,9 +73,9 @@ public class FindWirelessTerminal {
             return ItemStack.EMPTY;
         }
 
-        ItemStack mainInventoryStack = findInList(player.inventory.mainInventory, registry);
-        if (!mainInventoryStack.isEmpty()) {
-            return mainInventoryStack;
+        WirelessTerminalContext openableContext = findOpenableWirelessTerminal(player);
+        if (openableContext != null) {
+            return openableContext.getTerminalStack();
         }
 
         ItemStack offHandStack = findInList(player.inventory.offHandInventory, registry);
@@ -40,7 +83,7 @@ public class FindWirelessTerminal {
             return offHandStack;
         }
 
-        return findInBaubles(player, registry);
+        return ItemStack.EMPTY;
     }
 
     public static boolean hasWirelessTerminalItem(EntityPlayer player) {
@@ -69,24 +112,39 @@ public class FindWirelessTerminal {
         return ItemStack.EMPTY;
     }
 
-    private static ItemStack findInBaubles(EntityPlayer player, IWirelessTermRegistry registry) {
+    @Nullable
+    private static WirelessTerminalContext findContextInList(NonNullList<ItemStack> stacks,
+                                                             IWirelessTermRegistry registry,
+                                                             boolean baubleSlot) {
+        for (int slot = 0; slot < stacks.size(); slot++) {
+            ItemStack stack = stacks.get(slot);
+            if (isWirelessTerminal(stack, registry)) {
+                return new WirelessTerminalContext(stack, slot, baubleSlot);
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    private static WirelessTerminalContext findContextInBaubles(EntityPlayer player, IWirelessTermRegistry registry) {
         if (!Loader.isModLoaded("baubles")) {
-            return ItemStack.EMPTY;
+            return null;
         }
 
         IBaublesItemHandler baublesHandler = BaublesApi.getBaublesHandler(player);
         if (baublesHandler == null) {
-            return ItemStack.EMPTY;
+            return null;
         }
 
         for (int slot = 0; slot < baublesHandler.getSlots(); slot++) {
             ItemStack stack = baublesHandler.getStackInSlot(slot);
             if (isWirelessTerminal(stack, registry)) {
-                return stack;
+                return new WirelessTerminalContext(stack, slot, true);
             }
         }
 
-        return ItemStack.EMPTY;
+        return null;
     }
 
     @Nullable
