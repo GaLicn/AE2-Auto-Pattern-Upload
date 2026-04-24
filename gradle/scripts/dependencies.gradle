@@ -52,4 +52,6 @@ dependencies {
     //饰品槽
     implementation files('libs/Baubles-1.12-1.5.2.jar')
 
+    implementation rfg.deobf("curse.maven:jei-utilities-616190:6937116")
+
 }
