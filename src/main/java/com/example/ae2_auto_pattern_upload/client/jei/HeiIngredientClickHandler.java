@@ -1,5 +1,6 @@
 package com.example.ae2_auto_pattern_upload.client.jei;
 
+import com.example.ae2_auto_pattern_upload.network.MiddleClickPullOrCraftPacket;
 import com.example.ae2_auto_pattern_upload.network.ModNetwork;
 import com.example.ae2_auto_pattern_upload.network.OpenCraftAmountFromBookmarkPacket;
 import com.example.ae2_auto_pattern_upload.network.PullBookmarkItemPacket;
@@ -34,7 +35,7 @@ public final class HeiIngredientClickHandler {
         if (mouseButton == 2) {
             ModNetwork.CHANNEL.sendToServer(new OpenCraftAmountFromBookmarkPacket(stack));
         } else {
-            ModNetwork.CHANNEL.sendToServer(new PullBookmarkItemPacket(stack));
+            ModNetwork.CHANNEL.sendToServer(new MiddleClickPullOrCraftPacket(stack));
         }
 
         clicked.onClickHandled();
