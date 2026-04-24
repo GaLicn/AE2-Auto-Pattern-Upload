@@ -64,5 +64,11 @@ public class ModNetwork {
             PullBookmarkItemPacket.class,
             packetId++,
             Side.SERVER);
+
+        CHANNEL.registerMessage(
+            MiddleClickPullOrCraftPacket.Handler.class,
+            MiddleClickPullOrCraftPacket.class,
+            packetId++,
+            Side.SERVER);
     }
 }
