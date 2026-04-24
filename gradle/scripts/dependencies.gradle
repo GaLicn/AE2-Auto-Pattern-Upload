@@ -44,7 +44,7 @@ dependencies {
     implementation "curse.maven:had-enough-items-557549:7938914"
 
     //AE2 Fluid Crafting
-    implementation rfg.deobf("curse.maven:ae2-fluid-crafting-rework-623955:5751930")
+    //implementation rfg.deobf("curse.maven:ae2-fluid-crafting-rework-623955:5751930")
 
     //通用终端
     implementation rfg.deobf("curse.maven:ae2uel-wireless-universal-terminal-1196988:7760560")
@@ -53,5 +53,10 @@ dependencies {
     implementation files('libs/Baubles-1.12-1.5.2.jar')
 
     implementation rfg.deobf("curse.maven:jei-utilities-616190:6937116")
+
+    //模块化机械
+    implementation rfg.deobf("curse.maven:modularmachinery-community-edition-817377:7372951")
+    implementation ("curse.maven:crafttweaker-239197:5354089")
+    implementation rfg.deobf("curse.maven:ae2fluidcraft-rework-unofficial-1404390:7742544")
 
 }

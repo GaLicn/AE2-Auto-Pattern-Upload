@@ -22,6 +22,11 @@ import java.util.Set;
  * 当玩家点击编码终端上的上传按钮时发送此包
  */
 public class RequestProvidersListPacket implements IMessage {
+    private static final String[] KNOWN_INTERFACE_HOST_CLASSES = {
+            "com.glodblock.github.common.tile.TileDualInterface",
+            "com.glodblock.github.common.part.PartDualInterface",
+            "github.kasuminova.mmce.common.tile.MEPatternProvider"
+    };
     
     @Override
     public void fromBytes(ByteBuf buf) {
@@ -36,19 +41,22 @@ public class RequestProvidersListPacket implements IMessage {
     public static class Handler implements IMessageHandler<RequestProvidersListPacket, IMessage> {
         @Override
         public IMessage onMessage(RequestProvidersListPacket message, MessageContext ctx) {
-            com.example.ae2_auto_pattern_upload.ExampleMod.LOGGER.info("[APU] Received RequestProvidersListPacket from client");
-            
             EntityPlayerMP player = ctx.getServerHandler().player;
             if (player == null) {
-                com.example.ae2_auto_pattern_upload.ExampleMod.LOGGER.warn("[APU] Player is null in RequestProvidersListPacket handler");
                 return null;
             }
+            player.getServerWorld().addScheduledTask(() -> handle(message, player));
+            return null;
+        }
+
+        private static void handle(RequestProvidersListPacket message, EntityPlayerMP player) {
+            com.example.ae2_auto_pattern_upload.ExampleMod.LOGGER.info("[APU] Received RequestProvidersListPacket from client");
 
             com.example.ae2_auto_pattern_upload.ExampleMod.LOGGER.info("[APU] Processing request from player: {}", player.getName());
 
             if (player.openContainer == null) {
                 com.example.ae2_auto_pattern_upload.ExampleMod.LOGGER.warn("[APU] Player {} has no open container", player.getName());
-                return null;
+                return;
             }
 
             Object container = player.openContainer;
@@ -112,12 +120,12 @@ public class RequestProvidersListPacket implements IMessage {
                 }
                 
                 if (node == null) {
-                    return null;
+                    return;
                 }
                 
                 IGrid grid = node.getGrid();
                 if (grid == null) {
-                    return null;
+                    return;
                 }
                 
                 Set<Long> seenProviderIds = new HashSet<>();
@@ -126,6 +134,7 @@ public class RequestProvidersListPacket implements IMessage {
                 // 这样可以稳定拿到 part 接口，并使用 duality 中的终端名与真实样板空槽数。
                 collectInterfaceHosts(grid.getMachines(TileInterface.class), ids, names, slots, seenProviderIds);
                 collectInterfaceHosts(grid.getMachines(PartInterface.class), ids, names, slots, seenProviderIds);
+                collectKnownInterfaceHosts(grid, ids, names, slots, seenProviderIds);
 
                 // 再回退遍历网络中的其他供应器（ICraftingProvider）
                 for (Class<? extends IGridHost> hostClass : grid.getMachinesClasses()) {
@@ -164,10 +173,17 @@ public class RequestProvidersListPacket implements IMessage {
                 
             } catch (Throwable t) {
                 t.printStackTrace();
-                return null;
             }
-            
-            return null;
+        }
+
+        private static void collectKnownInterfaceHosts(IGrid grid,
+                                                       java.util.List<Long> ids,
+                                                       java.util.List<String> names,
+                                                       java.util.List<Integer> slots,
+                                                       Set<Long> seenProviderIds) {
+            for (String className : KNOWN_INTERFACE_HOST_CLASSES) {
+                collectInterfaceHosts(getMachinesByClassName(grid, className), ids, names, slots, seenProviderIds);
+            }
         }
 
         private static void collectInterfaceHosts(Iterable<IGridNode> machineNodes,
@@ -199,6 +215,20 @@ public class RequestProvidersListPacket implements IMessage {
                 ids.add(providerId);
                 names.add(ProvidersListS2CPacket.normalizeProviderName(providerName));
                 slots.add(getEmptyPatternSlots(interfaceHost));
+            }
+        }
+
+        private static Iterable<IGridNode> getMachinesByClassName(IGrid grid, String className) {
+            try {
+                Class<?> rawClass = Class.forName(className);
+                if (!IGridHost.class.isAssignableFrom(rawClass)) {
+                    return null;
+                }
+                @SuppressWarnings("unchecked")
+                Class<? extends IGridHost> hostClass = (Class<? extends IGridHost>) rawClass;
+                return grid.getMachines(hostClass);
+            } catch (Throwable ignored) {
+                return null;
             }
         }
 

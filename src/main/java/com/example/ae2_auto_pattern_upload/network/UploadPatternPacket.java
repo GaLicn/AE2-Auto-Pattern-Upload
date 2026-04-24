@@ -17,6 +17,11 @@ import net.minecraft.util.ResourceLocation;
  * C2S: 上传编码样板到指定供应器
  */
 public class UploadPatternPacket implements IMessage {
+    private static final String[] KNOWN_PROVIDER_CLASSES = {
+            "com.glodblock.github.common.tile.TileDualInterface",
+            "com.glodblock.github.common.part.PartDualInterface",
+            "github.kasuminova.mmce.common.tile.MEPatternProvider"
+    };
     
     private long providerId;
     
@@ -44,12 +49,16 @@ public class UploadPatternPacket implements IMessage {
             if (player == null) {
                 return null;
             }
-            
+            player.getServerWorld().addScheduledTask(() -> handle(message, player));
+            return null;
+        }
+
+        private static void handle(UploadPatternPacket message, EntityPlayerMP player) {
             // 不再强制要求必须是 AE2 原版的 ContainerPatternEncoder，
             // 只要是打开了一个容器，就尝试按 AE2/拓展模组的惯例去反射获取 pattern 槽与网络节点。
             // 这样可以兼容 AE2FluidCraft 的有线/无线流体样板终端等自定义容器。
             if (player.openContainer == null) {
-                return null;
+                return;
             }
 
             Object container = player.openContainer;
@@ -149,18 +158,18 @@ public class UploadPatternPacket implements IMessage {
                 }
                 
                 if (patternInventory == null) {
-                    return null;
+                    return;
                 }
                 
                 // 获取输出槽位的样板（已编码的样板）
                 ItemStack encodedPattern = patternInventory.getStackInSlot(1);
                 if (encodedPattern == null || encodedPattern.isEmpty()) {
-                    return null;
+                    return;
                 }
                 
                 // 检查是否是有效的编码样板
                 if (!isSupportedPattern(encodedPattern)) {
-                    return null;
+                    return;
                 }
                 
                 // 获取网络节点和网络
@@ -211,34 +220,23 @@ public class UploadPatternPacket implements IMessage {
                     }
                 }
                 
-                if (node == null) return null;
+                if (node == null) return;
                 
                 IGrid grid = node.getGrid();
-                if (grid == null) return null;
+                if (grid == null) return;
                 
                 // 查找目标供应器
-                ICraftingProvider targetProvider = null;
-                for (Class<? extends IGridHost> hostClass : grid.getMachinesClasses()) {
-                    if (!ICraftingProvider.class.isAssignableFrom(hostClass)) continue;
-                    
-                    for (IGridNode machineNode : grid.getMachines(hostClass)) {
-                        if (machineNode == null) continue;
-                        
-                        Object machine = machineNode.getMachine();
-                        if (!(machine instanceof ICraftingProvider)) continue;
-                        
-                        // 比较 hashCode 来找到目标供应器
-                        if ((long) machineNode.hashCode() == message.providerId) {
-                            targetProvider = (ICraftingProvider) machine;
-                            break;
-                        }
+                ICraftingProvider targetProvider = findProviderByKnownClasses(grid, message.providerId);
+                if (targetProvider == null) {
+                    for (Class<? extends IGridHost> hostClass : grid.getMachinesClasses()) {
+                        if (!ICraftingProvider.class.isAssignableFrom(hostClass)) continue;
+                        targetProvider = findProviderInNodes(grid.getMachines(hostClass), message.providerId);
+                        if (targetProvider != null) break;
                     }
-                    
-                    if (targetProvider != null) break;
                 }
                 
                 if (targetProvider == null) {
-                    return null;
+                    return;
                 }
                 
                 // 尝试将样板插入到供应器
@@ -314,19 +312,57 @@ public class UploadPatternPacket implements IMessage {
                 if (uploadSuccess) {
                     // 清空编码终端的输出槽位
                     patternInventory.extractItem(1, 1, false);
-                    return null;
+                    return;
                 }
                 
             } catch (Throwable t) {
                 t.printStackTrace();
-                return null;
             }
-            
-            return null;
         }
 
         private static final ResourceLocation AE2FC_DENSE_PATTERN_ID =
                 new ResourceLocation("ae2fc", "dense_encoded_pattern");
+
+        private static ICraftingProvider findProviderByKnownClasses(IGrid grid, long providerId) {
+            for (String className : KNOWN_PROVIDER_CLASSES) {
+                ICraftingProvider provider = findProviderInNodes(getMachinesByClassName(grid, className), providerId);
+                if (provider != null) {
+                    return provider;
+                }
+            }
+            return null;
+        }
+
+        private static ICraftingProvider findProviderInNodes(Iterable<IGridNode> machineNodes, long providerId) {
+            if (machineNodes == null) {
+                return null;
+            }
+            for (IGridNode machineNode : machineNodes) {
+                if (machineNode == null) continue;
+
+                Object machine = machineNode.getMachine();
+                if (!(machine instanceof ICraftingProvider)) continue;
+
+                if ((long) machineNode.hashCode() == providerId) {
+                    return (ICraftingProvider) machine;
+                }
+            }
+            return null;
+        }
+
+        private static Iterable<IGridNode> getMachinesByClassName(IGrid grid, String className) {
+            try {
+                Class<?> rawClass = Class.forName(className);
+                if (!IGridHost.class.isAssignableFrom(rawClass)) {
+                    return null;
+                }
+                @SuppressWarnings("unchecked")
+                Class<? extends IGridHost> hostClass = (Class<? extends IGridHost>) rawClass;
+                return grid.getMachines(hostClass);
+            } catch (Throwable ignored) {
+                return null;
+            }
+        }
 
         private static boolean isSupportedPattern(ItemStack stack) {
             if (stack == null || stack.isEmpty()) {
