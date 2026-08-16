@@ -6,6 +6,7 @@ import com.example.ae2_auto_pattern_upload.util.RecipeNameUtil;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.util.text.TextComponentString;
 
 import java.io.IOException;
@@ -371,7 +372,7 @@ public class GuiProviderSelect extends GuiScreen {
         }
     }
 
-    private String translate(String key) {
-        return net.minecraft.client.resources.I18n.format(key);
+    public static String translate(String key) {
+        return I18n.format(key);
     }
 }

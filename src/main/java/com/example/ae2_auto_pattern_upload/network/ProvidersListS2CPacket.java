@@ -12,6 +12,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.example.ae2_auto_pattern_upload.client.gui.GuiProviderSelect.translate;
+
 /**
  * S2C: 返回供应器列表到客户端
  */
@@ -85,7 +87,9 @@ public class ProvidersListS2CPacket implements IMessage {
         if (name == null || name.isEmpty()) {
             return DEFAULT_PROVIDER_NAME;
         }
-        return name;
+        String namedKey = name + ".name";
+        String translated = translate(namedKey);
+        return translated.equals(namedKey) ? translate(name) : translated;
     }
 
     public List<Long> getIds() {
