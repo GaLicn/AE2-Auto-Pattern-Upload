@@ -1,5 +1,6 @@
 package com.gali.ae2_auto_pattern_upload.compat;
 
+import com.gali.ae2_auto_pattern_upload.network.PatternUploadUtil;
 import mezz.jei.api.recipe.IRecipeManager;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.runtime.IJeiRuntime;
@@ -33,7 +34,8 @@ public final class JeiRuntimeCompat {
             if (matched == null) {
                 return null;
             }
-            return manager.getRecipeCategory(matched).getTitle().getString();
+            String title = manager.getRecipeCategory(matched).getTitle().getString();
+            return PatternUploadUtil.resolveRecipeTypeSearchKey(matched.getUid(), title);
         } catch (Throwable ignored) {
             return null;
         }
