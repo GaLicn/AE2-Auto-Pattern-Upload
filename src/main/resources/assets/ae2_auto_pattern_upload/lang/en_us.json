@@ -9,5 +9,11 @@
   "ae2_auto_pattern_upload.configuration.items": "Item List",
   "ae2_auto_pattern_upload.configuration.logDirtBlock": "Log Dirt Block",
   "ae2_auto_pattern_upload.configuration.magicNumberIntroduction": "Magic Number Text",
-  "ae2_auto_pattern_upload.configuration.magicNumber": "Magic Number"
+  "ae2_auto_pattern_upload.configuration.magicNumber": "Magic Number",
+  "ae2_auto_pattern_upload.button.upload": "Upload pattern to provider",
+  "ae2_auto_pattern_upload.screen.choose_provider.title": "Choose pattern provider",
+  "ae2_auto_pattern_upload.screen.search": "Search provider",
+  "ae2_auto_pattern_upload.screen.no_providers": "No available providers",
+  "ae2_auto_pattern_upload.screen.cancel.tooltip": "Return to pattern encoding terminal",
+  "ae2_auto_pattern_upload.provider.default": "Unnamed provider"
 }

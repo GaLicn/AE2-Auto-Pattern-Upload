@@ -30,6 +30,7 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import com.gali.ae2_auto_pattern_upload.network.ModNetwork;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(AE2AutoPatternUpload.MODID)
@@ -68,6 +69,8 @@ public class AE2AutoPatternUpload {
     public AE2AutoPatternUpload(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
+        // 注册 NeoForge 1.21 的 Payload 网络处理器。
+        modEventBus.addListener(ModNetwork::registerPayloadHandlers);
 
         // Register the Deferred Register to the mod event bus so blocks get registered
         BLOCKS.register(modEventBus);

@@ -2,7 +2,16 @@
   "required": true,
   "package": "com.gali.ae2_auto_pattern_upload.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": [],
+  "mixins": [
+    "PatternEncodingTermMenuAccessor"
+  ],
+  "client": [
+    "AbstractContainerScreenAccessor",
+    "AEBaseScreenAccessor",
+    "ScreenAccessor",
+    "client.PatternEncodingTermScreenMixin",
+    "jei.AE2JeiEncodePatternTransferHandlerMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },
