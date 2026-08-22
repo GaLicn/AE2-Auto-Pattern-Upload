@@ -265,7 +265,6 @@ public class RecipeTypeMappingScreen extends Screen {
         int panelWidth = Math.min(600, width - 20);
         int panelHeight = Math.min(390, height - 20);
         int panelY = (height - panelHeight) / 2;
-        extractBackground(graphics, mouseX, mouseY, partialTick);
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
         graphics.centeredText(font, title, width / 2, panelY + 9, 0xFFFFFFFF);
         int totalPages = Math.max(1, (filteredMappings.size() + pageSize - 1) / pageSize);

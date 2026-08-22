@@ -2,9 +2,11 @@ package com.gali.ae2_auto_pattern_upload.mixin.client;
 
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.me.items.PatternEncodingTermScreen;
+import appeng.client.gui.style.Blitter;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.style.WidgetStyle;
 import appeng.client.gui.widgets.IconButton;
+import appeng.util.Icon;
 import appeng.menu.AEBaseMenu;
 import com.gali.ae2_auto_pattern_upload.mixin.AEBaseScreenAccessor;
 import com.gali.ae2_auto_pattern_upload.mixin.AbstractContainerScreenAccessor;
@@ -15,6 +17,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -40,8 +43,47 @@ public abstract class PatternEncodingTermScreenMixin<T extends AEBaseMenu> {
                 }
             }) {
                 @Override
-                protected appeng.util.Icon getIcon() {
-                    return appeng.util.Icon.ARROW_UP;
+                protected Icon getIcon() {
+                    return Icon.ARROW_UP;
+                }
+
+                @Override
+                public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY,
+                                             float partialTick) {
+                    if (!visible) {
+                        return;
+                    }
+
+                    // 保持 1.21.1 的 16x16 图标按 0.75 倍绘制为 12x12。
+                    int iconWidth = Math.round(16 * 0.75f);
+                    int iconHeight = Math.round(16 * 0.75f);
+                    if (isFocused()) {
+                        graphics.fill(getX() - 1, getY() - 1, getX() + iconWidth + 1, getY(), 0xFFFFFFFF);
+                        graphics.fill(getX() - 1, getY(), getX(), getY() + iconHeight, 0xFFFFFFFF);
+                        graphics.fill(getX() + iconWidth, getY(), getX() + iconWidth + 1,
+                                getY() + iconHeight, 0xFFFFFFFF);
+                        graphics.fill(getX() - 1, getY() + iconHeight, getX() + iconWidth + 1,
+                                getY() + iconHeight + 1, 0xFFFFFFFF);
+                    }
+
+                    var pose = graphics.pose();
+                    pose.pushMatrix();
+                    pose.translate(getX(), getY());
+                    pose.scale(0.75f, 0.75f);
+                    if (!isDisableBackground()) {
+                        Blitter.icon(Icon.TOOLBAR_BUTTON_BACKGROUND).dest(0, 0).blit(graphics);
+                    }
+                    var iconBlitter = Blitter.icon(getIcon());
+                    if (!active) {
+                        iconBlitter.opacity(0.5f);
+                    }
+                    iconBlitter.dest(0, 0).blit(graphics);
+                    pose.popMatrix();
+                }
+
+                @Override
+                public Rect2i getTooltipArea() {
+                    return new Rect2i(getX(), getY(), Math.round(16 * 0.75f), Math.round(16 * 0.75f));
                 }
             };
             ae2apu$uploadButton.setTooltip(Tooltip.create(
