@@ -57,6 +57,6 @@ public class ProvidersListS2CPacket {
     private static void handleClient(ProvidersListS2CPacket msg) {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null) return;
-        mc.setScreen(new ProviderSelectScreen(msg.ids, msg.names, msg.emptySlots));
+        mc.setScreen(new ProviderSelectScreen(mc.screen, msg.ids, msg.names, msg.emptySlots));
     }
 }

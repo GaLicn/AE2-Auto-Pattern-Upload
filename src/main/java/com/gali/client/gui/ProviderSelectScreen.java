@@ -3,480 +3,352 @@ package com.gali.client.gui;
 import com.gali.network.ModNetwork;
 import com.gali.network.UploadPatternPacket;
 import com.gali.util.RecipeTypeNameConfig;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraftforge.fml.loading.FMLPaths;
 
-import java.util.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * 供应器选择界面，完全对齐ExtendedAE-Plus的布局
- */
+/** EAEP 1.20.1 风格的供应器选择界面。 */
 public class ProviderSelectScreen extends Screen {
-    private static final int PAGE_SIZE = 6;
+    private static final int MIN_PAGE_SIZE = 2;
+    private static final String UI_CONFIG = "ae2_auto_pattern_upload/provider_screen.json";
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    private static final Set<String> PINNED_PROVIDERS = new HashSet<>();
+    private static boolean autoUploadUniqueMatchEnabled = true;
+    private static final Pattern NATURAL_PATTERN = Pattern.compile("(\\D*)(\\d*)");
+
+    static { loadUiConfig(); }
 
     private final Screen parent;
     private final List<Long> ids;
     private final List<String> names;
     private final List<Integer> emptySlots;
-    
-    // 分组后的数据
-    private final List<Long> gIds = new ArrayList<>();
-    private final List<String> gNames = new ArrayList<>();
-    private final List<Integer> gTotalSlots = new ArrayList<>();
-    private final List<Integer> gCount = new ArrayList<>();
-    
-    // 过滤后的数据
-    private final List<Long> fIds = new ArrayList<>();
-    private final List<String> fNames = new ArrayList<>();
-    private final List<Integer> fTotalSlots = new ArrayList<>();
-    private final List<Integer> fCount = new ArrayList<>();
-    
-    private EditBox searchBox;
-    private EditBox cnInput;
-    private String query = "";
-    private Button prevButton;
-    private Button nextButton;
-    private int page = 0;
-    
+    private final List<Group> groups = new ArrayList<>();
+    private final List<Group> filteredGroups = new ArrayList<>();
     private final List<Button> entryButtons = new ArrayList<>();
-    private final int[] buttonIndexMap = new int[PAGE_SIZE];
-    
-    private static final Map<String, String> componentCache = new HashMap<>();
-    private String lastLanguage = "";
+    private EditBox searchBox;
+    private EditBox mappingValueInput;
+    private Button autoUploadButton;
+    private String query = "";
+    private int page;
+    private int pageSize = 6;
+    private boolean autoUploadRequested;
+    private boolean autoUploadAttempted;
+    private boolean filterUsedFallback;
 
-    public ProviderSelectScreen(List<Long> ids, List<String> names, List<Integer> emptySlots) {
+    public ProviderSelectScreen(Screen parent, List<Long> ids, List<String> names, List<Integer> emptySlots) {
         super(Component.translatable("gali.gui.provider_select"));
-        this.parent = null;
+        this.parent = parent;
         this.ids = ids;
         this.names = names;
         this.emptySlots = emptySlots;
-        
-        // 从JEI获取最近的配方类型名称
-        try {
-            String recent = RecipeTypeNameConfig.lastProcessingName;
-            if (recent != null && !recent.isBlank()) {
-                this.query = recent;
-                RecipeTypeNameConfig.lastProcessingName = null;
-            }
-        } catch (Throwable ignored) {}
-        
+        String preset = RecipeTypeNameConfig.consumeLastProviderSearchKey();
+        if (preset != null && !preset.isBlank()) {
+            query = RecipeTypeNameConfig.resolveProviderSearchKey(preset);
+            autoUploadRequested = true;
+        }
         buildGroups();
         applyFilter();
     }
 
-    private String deserializeComponentName(String name) {
-        return componentCache.computeIfAbsent(name, k -> {
-            try {
-                if (name.startsWith("{") || name.startsWith("\"")) {
-                    Component component = Component.Serializer.fromJson(name);
-                    if (component != null) {
-                        return component.getString();
-                    }
-                }
-            } catch (Exception ignored) {}
-            return name;
-        });
-    }
-
     private void buildGroups() {
-        Map<String, Group> map = new LinkedHashMap<>();
-        for (int i = 0; i < names.size(); i++) {
-            String name = names.get(i);
-            long id = ids.get(i);
-            int slots = emptySlots.get(i);
-
-            String groupKey = deserializeComponentName(name);
-            map.compute(groupKey, (k, g) -> {
-                if (g == null) {
-                    return new Group(id, slots);
-                }
-                g.merge(id, slots);
-                return g;
-            });
+        Map<String, Group> grouped = new LinkedHashMap<>();
+        int size = Math.min(ids.size(), Math.min(names.size(), emptySlots.size()));
+        for (int i = 0; i < size; i++) {
+            String name = deserializeName(names.get(i));
+            Group group = grouped.computeIfAbsent(name, Group::new);
+            int slots = Math.max(0, emptySlots.get(i));
+            group.totalSlots += slots;
+            group.count++;
+            if (slots > group.representativeSlots) {
+                group.representativeSlots = slots;
+                group.representativeId = ids.get(i);
+            }
         }
-        
-        for (Map.Entry<String, Group> e : map.entrySet()) {
-            String name = e.getKey();
-            Group g = e.getValue();
-            gNames.add(name);
-            gIds.add(g.bestId);
-            gTotalSlots.add(g.totalSlots);
-            gCount.add(g.count);
-        }
+        groups.addAll(grouped.values());
     }
 
     private void applyFilter() {
-        fIds.clear();
-        fNames.clear();
-        fTotalSlots.clear();
-        fCount.clear();
-        
-        String q = query == null ? "" : query.trim();
-        String qLower = q.toLowerCase(Locale.ROOT);
-
-        for (int i = 0; i < gIds.size(); i++) {
-            String name = gNames.get(i);
-            if (q.isEmpty() || name.toLowerCase(Locale.ROOT).contains(qLower)) {
-                fIds.add(gIds.get(i));
-                fNames.add(name);
-                fTotalSlots.add(gTotalSlots.get(i));
-                fCount.add(gCount.get(i));
-            }
+        filteredGroups.clear();
+        filterUsedFallback = false;
+        String searchKey = RecipeTypeNameConfig.resolveProviderSearchKey(query);
+        String lower = searchKey.toLowerCase(Locale.ROOT);
+        for (Group group : groups) {
+            if (searchKey.isEmpty() || group.name.toLowerCase(Locale.ROOT).contains(lower)) filteredGroups.add(group);
         }
-        
-        if (!q.isEmpty() && fIds.isEmpty()) {
-            for (int i = 0; i < gIds.size(); i++) {
-                fIds.add(gIds.get(i));
-                fNames.add(gNames.get(i));
-                fTotalSlots.add(gTotalSlots.get(i));
-                fCount.add(gCount.get(i));
-            }
+        // EAEP 在无匹配时保留列表，避免用户被空页面误导；自动上传不会使用这个回退结果。
+        if (!searchKey.isEmpty() && filteredGroups.isEmpty()) {
+            filterUsedFallback = true;
+            filteredGroups.addAll(groups);
         }
-
-        // 自然排序
-        List<Integer> indices = new ArrayList<>();
-        for (int i = 0; i < fNames.size(); i++) indices.add(i);
-        indices.sort((i1, i2) -> compareNatural(fNames.get(i1), fNames.get(i2)));
-
-        List<Long> sortedIds = new ArrayList<>();
-        List<String> sortedNames = new ArrayList<>();
-        List<Integer> sortedSlots = new ArrayList<>();
-        List<Integer> sortedCount = new ArrayList<>();
-
-        for (int idx : indices) {
-            sortedIds.add(fIds.get(idx));
-            sortedNames.add(fNames.get(idx));
-            sortedSlots.add(fTotalSlots.get(idx));
-            sortedCount.add(fCount.get(idx));
-        }
-
-        fIds.clear();
-        fIds.addAll(sortedIds);
-        fNames.clear();
-        fNames.addAll(sortedNames);
-        fTotalSlots.clear();
-        fTotalSlots.addAll(sortedSlots);
-        fCount.clear();
-        fCount.addAll(sortedCount);
-    }
-
-    private static final Pattern NATURAL_PATTERN = Pattern.compile("(\\D*)(\\d*)");
-    
-    private static int compareNatural(String s1, String s2) {
-        Matcher m1 = NATURAL_PATTERN.matcher(s1);
-        Matcher m2 = NATURAL_PATTERN.matcher(s2);
-
-        while (m1.find() && m2.find()) {
-            int cmp = m1.group(1).compareTo(m2.group(1));
-            if (cmp != 0) return cmp;
-
-            String num1 = m1.group(2);
-            String num2 = m2.group(2);
-            if (!num1.isEmpty() || !num2.isEmpty()) {
-                int n1 = num1.isEmpty() ? 0 : Integer.parseInt(num1);
-                int n2 = num2.isEmpty() ? 0 : Integer.parseInt(num2);
-                if (n1 != n2) return Integer.compare(n1, n2);
-            }
-        }
-        return s1.length() - s2.length();
+        filteredGroups.sort((first, second) -> {
+            boolean firstPinned = PINNED_PROVIDERS.contains(first.name);
+            boolean secondPinned = PINNED_PROVIDERS.contains(second.name);
+            if (firstPinned != secondPinned) return firstPinned ? -1 : 1;
+            return compareNatural(first.name, second.name);
+        });
+        int maxPage = Math.max(0, (filteredGroups.size() - 1) / Math.max(1, pageSize));
+        page = Math.min(page, maxPage);
     }
 
     @Override
     protected void init() {
-        this.clearWidgets();
+        String mappingValue = mappingValueInput == null ? "" : mappingValueInput.getValue();
+        clearWidgets();
         entryButtons.clear();
 
-        int centerX = this.width / 2;
-        int startY = this.height / 2 - 70;
+        int centerX = width / 2;
+        int buttonHeight = 20;
+        int gap = 5;
+        int reservedHeight = 30 + 30 + 30 + 20 + 40;
+        pageSize = Math.max(MIN_PAGE_SIZE, (height - reservedHeight) / (buttonHeight + gap));
+        page = Math.min(page, Math.max(0, (filteredGroups.size() - 1) / pageSize));
+        int contentHeight = 30 + pageSize * (buttonHeight + gap) + 30 + 30 + 20;
+        int startY = (height - contentHeight) / 2 + 30;
 
-        // 搜索框（置于条目上方）
-        if (searchBox == null) {
-            searchBox = new EditBox(this.font, centerX - 120, startY - 25, 240, 18, Component.translatable("gali.gui.search"));
-        } else {
-            // 重新定位，保持输入值
-            searchBox.setX(centerX - 120);
-            searchBox.setY(startY - 25);
-            searchBox.setWidth(240);
-        }
+        searchBox = new EditBox(font, centerX - 120, startY - 25, 240, 18,
+                Component.translatable("gali.gui.search"));
+        searchBox.setMaxLength(256);
         searchBox.setValue(query);
-        searchBox.setResponder(text -> {
-            // 只有当输入真正发生变化时，才重置页码与过滤
-            if (Objects.equals(text, query)) return;
-            query = text;
+        searchBox.setResponder(value -> {
+            if (value.equals(query)) return;
+            query = value;
             page = 0;
             applyFilter();
             refreshButtons();
         });
-        this.addRenderableWidget(searchBox);
+        addRenderableWidget(searchBox);
 
-        // 初始化按钮池
-        int buttonWidth = 240;
-        int buttonHeight = 20;
-        int gap = 5;
-        for (int i = 0; i < PAGE_SIZE; i++) {
-            int btnIdx = i;
-            Button btn = Button.builder(Component.literal(""), b -> {
-                        int actualIdx = buttonIndexMap[btnIdx];
-                        if (actualIdx >= 0 && actualIdx < fIds.size()) {
-                            onChoose(actualIdx);
-                        }
-                    }).bounds(centerX - buttonWidth / 2, startY + i * (buttonHeight + gap), buttonWidth, buttonHeight)
-                    .build();
-            entryButtons.add(btn);
-            buttonIndexMap[i] = -1; // 初始化为无效索引
-            this.addRenderableWidget(btn);
+        int start = page * pageSize;
+        int end = Math.min(start + pageSize, filteredGroups.size());
+        for (int index = start; index < end; index++) {
+            Group group = filteredGroups.get(index);
+            Button button = Button.builder(Component.literal(group.label()), ignored -> choose(group))
+                    .bounds(centerX - 120, startY + (index - start) * (buttonHeight + gap), 240, buttonHeight).build();
+            entryButtons.add(button);
+            addRenderableWidget(button);
         }
 
-        // 分页按钮
-        int navY = startY + PAGE_SIZE * (buttonHeight + gap) + 10;
-        prevButton = Button.builder(Component.literal("<"), b -> changePage(-1))
-                .bounds(centerX - 60, navY, 20, 20)
-                .build();
-        nextButton = Button.builder(Component.literal(">"), b -> changePage(1))
-                .bounds(centerX + 40, navY, 20, 20)
-                .build();
-        this.addRenderableWidget(prevButton);
-        this.addRenderableWidget(nextButton);
+        int navigationY = startY + pageSize * (buttonHeight + gap) + 10;
+        Button previous = Button.builder(Component.literal("<"), ignored -> changePage(-1))
+                .bounds(centerX - 60, navigationY, 20, 20).build();
+        Button next = Button.builder(Component.literal(">"), ignored -> changePage(1))
+                .bounds(centerX + 40, navigationY, 20, 20).build();
+        previous.active = page > 0;
+        next.active = (page + 1) * pageSize < filteredGroups.size();
+        addRenderableWidget(previous);
+        addRenderableWidget(next);
 
-        // 映射按钮和输入框
-        // 统一按钮宽度
-        int btnWidth2 = 80;
-        int inputWidth = 120;
-        int btnGap = 5;
+        int controlsWidth = Math.min(500, Math.max(240, width - 20));
+        int controlsX = centerX - controlsWidth / 2;
+        int toggleWidth = Math.min(240, controlsWidth);
+        int toggleY = navigationY + 30;
+        autoUploadButton = Button.builder(autoUploadLabel(), ignored -> toggleAutoUpload())
+                .bounds(centerX - toggleWidth / 2, toggleY, toggleWidth, 20).build();
+        autoUploadButton.setTooltip(Tooltip.create(Component.translatable("gali.gui.auto_upload_unique.tooltip")));
+        addRenderableWidget(autoUploadButton);
 
-        // 总宽度 = 重载按钮 + 输入框 + 添加 + 删除 + 关闭按钮 + 间距
-        int totalWidth = btnWidth2 + btnGap + inputWidth + btnGap + btnWidth2 * 2 + btnGap + btnWidth2;
-        int startX = centerX - totalWidth / 2;
+        int quickMappingY = navigationY + 55;
+        int quickInputWidth = 150;
+        mappingValueInput = new EditBox(font, controlsX, quickMappingY, quickInputWidth, 20,
+                Component.translatable("gali.gui.mapping_name"));
+        mappingValueInput.setMaxLength(256);
+        mappingValueInput.setValue(mappingValue);
+        addRenderableWidget(mappingValueInput);
+        addRenderableWidget(Button.builder(Component.translatable("gali.gui.add"), ignored -> addMapping())
+                .bounds(controlsX + quickInputWidth + 5, quickMappingY, 85, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("gali.gui.mapping.management"), ignored ->
+                        Minecraft.getInstance().setScreen(new RecipeTypeMappingScreen(this)))
+                .bounds(controlsX + quickInputWidth + 95, quickMappingY, 155, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), ignored -> onClose())
+                .bounds(controlsX + quickInputWidth + 255, quickMappingY, 80, 20).build());
 
-        // 重载映射按钮
-        Button reload = Button.builder(Component.translatable("gali.gui.reload"), b -> reloadMapping())
-                .bounds(startX, navY + 30, btnWidth2, 20)
-                .build();
-        this.addRenderableWidget(reload);
+        tryAutoUploadIfUniqueMatch();
+    }
 
-        // 中文名输入框（用于新增映射的值）
-        if (cnInput == null) {
-            cnInput = new EditBox(this.font, startX + btnWidth2 + btnGap, navY + 30, inputWidth, 20, Component.translatable("gali.gui.mapping_name"));
-        } else {
-            cnInput.setX(startX + btnWidth2 + btnGap);
-            cnInput.setY(navY + 30);
-            cnInput.setWidth(inputWidth);
-        }
-        this.addRenderableWidget(cnInput);
+    private void choose(Group group) {
+        ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(group.representativeId, false, group.name));
+        onClose();
+    }
 
-        // 关闭按钮
-        Button close = Button.builder(Component.translatable("gui.cancel"), b -> onClose())
-                .bounds(startX + btnWidth2 + btnGap + inputWidth + btnGap, navY + 30, btnWidth2, 20)
-                .build();
-        this.addRenderableWidget(close);
-
-        // 添加映射按钮（使用当前搜索关键字 -> 中文）
-        Button addMap = Button.builder(Component.translatable("gali.gui.add"), b -> addMapping())
-                .bounds(startX + btnWidth2 + btnGap + inputWidth + btnGap + btnWidth2 + btnGap, navY + 30, btnWidth2, 20)
-                .build();
-        this.addRenderableWidget(addMap);
-
-        // 删除映射按钮（按中文值精确匹配删除）按钮
-        Button delByCn = Button.builder(Component.translatable("gali.gui.delete"), b -> deleteMapping())
-                .bounds(startX + btnWidth2 + btnGap + inputWidth + btnGap + btnWidth2 * 2 + btnGap * 2, navY + 30, btnWidth2, 20)
-                .build();
-        this.addRenderableWidget(delByCn);
-
-        refreshButtons(); // 初始化完成后刷新按钮状态
+    private void chooseAutomatically(Group group) {
+        ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(group.representativeId, true, group.name));
+        onClose();
     }
 
     private void changePage(int delta) {
-        int newPage = page + delta;
-        if (newPage < 0 || newPage * PAGE_SIZE >= fIds.size()) return;
-        page = newPage;
-        refreshButtons();
+        int next = page + delta;
+        if (next >= 0 && next * pageSize < filteredGroups.size()) { page = next; init(); }
     }
 
     private void refreshButtons() {
-        int start = page * PAGE_SIZE;
-        int end = Math.min(start + PAGE_SIZE, fIds.size());
-        for (int i = 0; i < PAGE_SIZE; i++) {
-            Button btn = entryButtons.get(i);
-            int idx = start + i;
-            if (idx < end) {
-                btn.visible = true;
-                btn.active = true;
-                btn.setMessage(Component.literal(buildLabel(idx)));
-                buttonIndexMap[i] = idx;
-            } else {
-                btn.visible = false;
-                btn.active = false;
-                buttonIndexMap[i] = -1;
-            }
-        }
-        if (prevButton != null) prevButton.active = page > 0;
-        if (nextButton != null) nextButton.active = fIds.size() > (page + 1) * PAGE_SIZE;
-    }
-
-    private String buildLabel(int idx) {
-        String name = fNames.get(idx);
-        int totalSlots = fTotalSlots.get(idx);
-        int count = fCount.get(idx);
-        return name + "  (" + totalSlots + ")  x" + count;
-    }
-
-    private void onChoose(int idx) {
-        if (idx < 0 || idx >= fIds.size()) return;
-        long providerId = fIds.get(idx);
-        ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(providerId));
-        this.onClose();
+        // 输入框改变时直接重建控件，确保旧页面按钮不会残留。
+        init();
     }
 
     private void addMapping() {
-        String key = query == null ? "" : query.trim();
-        String value = cnInput == null ? "" : cnInput.getValue().trim();
-        if (key.isEmpty()) {
-            sendMessage(Component.translatable("gali.gui.error.enter_search_key"));
-            return;
-        }
-        if (value.isEmpty()) {
-            sendMessage(Component.translatable("gali.gui.error.enter_mapping_name"));
-            return;
-        }
-        if (RecipeTypeNameConfig.addOrUpdateAliasMapping(key, value)) {
-            sendMessage(Component.translatable("gali.gui.mapping_added", key, value));
-            this.query = value;
-            if (this.searchBox != null) {
-                this.searchBox.setValue(value);
-            }
-            try {
-                RecipeTypeNameConfig.loadRecipeTypeNames();
-            } catch (Exception ignored) {}
-            applyFilter();
+        String key = query.trim();
+        String value = mappingValueInput.getValue().trim();
+        if (key.isEmpty() || value.isEmpty()) return;
+        if (RecipeTypeNameConfig.addOrUpdateRecipeTypeMapping(key, value)) {
+            query = value;
             page = 0;
-            refreshButtons();
-        } else {
-            sendMessage(Component.translatable("gali.gui.mapping_add_failed"));
-        }
-    }
-
-    private void reloadMapping() {
-        try {
-            RecipeTypeNameConfig.loadRecipeTypeNames();
-            sendMessage(Component.translatable("gali.gui.mapping_reloaded"));
-        } catch (Exception e) {
-            sendMessage(Component.translatable("gali.gui.mapping_reload_failed", e.getMessage()));
-        }
-    }
-
-    private void deleteMapping() {
-        String value = cnInput == null ? "" : cnInput.getValue().trim();
-        if (value.isEmpty()) {
-            sendMessage(Component.translatable("gali.gui.error.enter_delete_name"));
-            return;
-        }
-        int removed = RecipeTypeNameConfig.removeMappingsByCnValue(value);
-        if (removed > 0) {
-            sendMessage(Component.translatable("gali.gui.mapping_removed", removed));
-            try {
-                RecipeTypeNameConfig.loadRecipeTypeNames();
-            } catch (Exception ignored) {}
             applyFilter();
-            page = 0;
-            refreshButtons();
-        } else {
-            sendMessage(Component.translatable("gali.gui.mapping_not_found", value));
+            init();
         }
     }
 
-    private void sendMessage(Component component) {
-		if (this.minecraft != null && this.minecraft.player != null) {
-			this.minecraft.player.displayClientMessage(component, true);
-		}
-	}
+    private Component autoUploadLabel() {
+        return Component.translatable("gali.gui.auto_upload_unique",
+                Component.translatable(autoUploadUniqueMatchEnabled ? "gali.gui.on" : "gali.gui.off"));
+    }
 
+    private void toggleAutoUpload() {
+        autoUploadUniqueMatchEnabled = !autoUploadUniqueMatchEnabled;
+        saveUiConfig();
+        if (autoUploadButton != null) autoUploadButton.setMessage(autoUploadLabel());
+    }
 
-    @Override
-    public void onClose() {
-        if (parent != null) {
-            Minecraft.getInstance().setScreen(parent);
-        } else {
-            super.onClose();
+    private void tryAutoUploadIfUniqueMatch() {
+        if (!autoUploadUniqueMatchEnabled || !autoUploadRequested || autoUploadAttempted) return;
+        autoUploadAttempted = true;
+        if (!query.isBlank() && !filterUsedFallback && filteredGroups.size() == 1) {
+            chooseAutomatically(filteredGroups.get(0));
         }
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // 右键点击搜索框清空
-        if (button == 1 && this.searchBox != null) {
-            int x = this.searchBox.getX();
-            int y = this.searchBox.getY();
-            int w = this.searchBox.getWidth();
-            int h = this.searchBox.getHeight();
-            if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
-                if (!this.searchBox.getValue().isEmpty()) {
-                    this.searchBox.setValue("");
+        if (button == 1 && searchBox != null && mouseX >= searchBox.getX() && mouseX <= searchBox.getX() + searchBox.getWidth()
+                && mouseY >= searchBox.getY() && mouseY <= searchBox.getY() + searchBox.getHeight()) {
+            searchBox.setValue("");
+            query = "";
+            page = 0;
+            applyFilter();
+            init();
+            return true;
+        }
+        if (button == 1) {
+            for (int index = 0; index < entryButtons.size(); index++) {
+                Button entry = entryButtons.get(index);
+                if (entry.visible && mouseX >= entry.getX() && mouseX <= entry.getX() + entry.getWidth()
+                        && mouseY >= entry.getY() && mouseY <= entry.getY() + entry.getHeight()) {
+                    togglePin(page * pageSize + index);
+                    return true;
                 }
-                this.query = "";
-                this.page = 0;
-                applyFilter();
-                refreshButtons();
-                return true;
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    @Override
-    public void tick() {
-        super.tick();
-        if (searchBox != null) {
-            searchBox.tick();
-        }
-        if (cnInput != null) {
-            cnInput.tick();
-        }
-
-        String currentLang = Minecraft.getInstance().options.languageCode;
-        if (!currentLang.equals(lastLanguage)) {
-            lastLanguage = currentLang;
-            componentCache.clear();
-            refreshButtons();
-        }
+    private void togglePin(int index) {
+        if (index < 0 || index >= filteredGroups.size()) return;
+        String name = filteredGroups.get(index).name;
+        if (!PINNED_PROVIDERS.add(name)) PINNED_PROVIDERS.remove(name);
+        saveUiConfig();
+        applyFilter();
+        init();
     }
 
-    @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(graphics);
-        super.render(graphics, mouseX, mouseY, partialTick);
-    }
-
-    @Override
-    public boolean isPauseScreen() {
-        return false;
-    }
-
-    private static class Group {
-        long bestId;
-        int bestSlots;
-        int totalSlots;
-        int count;
-
-        Group(long id, int slots) {
-            this.bestId = id;
-            this.bestSlots = slots;
-            this.totalSlots = Math.max(0, slots);
-            this.count = 1;
-        }
-
-        void merge(long id, int slots) {
-            count++;
-            totalSlots += Math.max(0, slots);
-            if (slots > bestSlots) {
-                bestSlots = slots;
-                bestId = id;
+    private static String deserializeName(String name) {
+        if (name == null) return "";
+        try {
+            if (name.startsWith("{") || name.startsWith("\"")) {
+                Component component = Component.Serializer.fromJson(name);
+                if (component != null) return component.getString();
             }
+        } catch (Exception ignored) {}
+        return name;
+    }
+
+    private static int compareNatural(String first, String second) {
+        Matcher firstMatcher = NATURAL_PATTERN.matcher(first);
+        Matcher secondMatcher = NATURAL_PATTERN.matcher(second);
+        while (firstMatcher.find() && secondMatcher.find()) {
+            int textCompare = firstMatcher.group(1).compareTo(secondMatcher.group(1));
+            if (textCompare != 0) return textCompare;
+            String firstNumber = firstMatcher.group(2);
+            String secondNumber = secondMatcher.group(2);
+            if (!firstNumber.isEmpty() || !secondNumber.isEmpty()) {
+                int firstValue = firstNumber.isEmpty() ? 0 : Integer.parseInt(firstNumber);
+                int secondValue = secondNumber.isEmpty() ? 0 : Integer.parseInt(secondNumber);
+                if (firstValue != secondValue) return Integer.compare(firstValue, secondValue);
+            }
+        }
+        return first.length() - second.length();
+    }
+
+    private static void loadUiConfig() {
+        try {
+            Path path = FMLPaths.CONFIGDIR.get().resolve(UI_CONFIG);
+            if (!Files.exists(path)) return;
+            JsonObject object = GSON.fromJson(Files.readString(path), JsonObject.class);
+            if (object == null) return;
+            if (object.get("pinned") instanceof JsonArray pinned) {
+                PINNED_PROVIDERS.clear();
+                pinned.forEach(value -> { if (value.isJsonPrimitive()) PINNED_PROVIDERS.add(value.getAsString()); });
+            }
+            if (object.has("auto_upload_unique_match")) autoUploadUniqueMatchEnabled =
+                    object.get("auto_upload_unique_match").getAsBoolean();
+        } catch (IOException | RuntimeException ignored) {}
+    }
+
+    private static void saveUiConfig() {
+        try {
+            Path path = FMLPaths.CONFIGDIR.get().resolve(UI_CONFIG);
+            Files.createDirectories(path.getParent());
+            JsonObject object = new JsonObject();
+            JsonArray pinned = new JsonArray();
+            PINNED_PROVIDERS.forEach(pinned::add);
+            object.add("pinned", pinned);
+            object.addProperty("auto_upload_unique_match", autoUploadUniqueMatchEnabled);
+            Files.writeString(path, GSON.toJson(object));
+        } catch (IOException ignored) {}
+    }
+
+    @Override public void onClose() { Minecraft.getInstance().setScreen(parent); }
+    @Override public boolean isPauseScreen() { return false; }
+
+    @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        renderBackground(graphics);
+        super.render(graphics, mouseX, mouseY, partialTick);
+        if (filteredGroups.isEmpty()) graphics.drawCenteredString(font,
+                Component.translatable("gali.gui.no_providers"), width / 2, height / 2, 0xFFFFFFFF);
+    }
+
+    private static final class Group {
+        private final String name;
+        private long representativeId;
+        private int representativeSlots;
+        private int totalSlots;
+        private int count;
+
+        private Group(String name) { this.name = name; }
+
+        private String label() {
+            return (PINNED_PROVIDERS.contains(name) ? "★ " : "") + name + "  (" + totalSlots + ")  x" + count;
         }
     }
 }

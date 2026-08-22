@@ -1,9 +1,11 @@
 package com.gali.util;
 
-import com.google.gson.*;
 import com.gali.ae2_auto_pattern_upload;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -14,244 +16,219 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * 负责配置文件 ae2_auto_pattern_upload/recipe_type_names.json 的加载与写入，
- * 以及 recipeType -> 中文名称 / 搜索关键字 的映射逻辑。
- */
+/** 管理配方类型 UID、JEI 分类标题与供应器搜索词之间的映射。 */
 public final class RecipeTypeNameConfig {
     private static final String CONFIG_PATH = "ae2_auto_pattern_upload/recipe_type_names.json";
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final Map<ResourceLocation, String> CUSTOM_NAMES = new ConcurrentHashMap<>();
     private static final Map<String, String> CUSTOM_ALIASES = new ConcurrentHashMap<>();
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    public record RecipeTypeMapping(String key, String value) {}
+
+    public static final String DEFAULT_CRAFTING_SEARCH_KEY = "crafting";
+    private static volatile String lastProviderSearchKey;
 
     static {
         try {
             loadRecipeTypeNames();
-        } catch (Throwable t) {
-            ae2_auto_pattern_upload.LOGGER.warn("映射文件解析失败: {}", t.getMessage());
+        } catch (Throwable error) {
+            ae2_auto_pattern_upload.LOGGER.warn("配方类型映射加载失败: {}", error.getMessage());
         }
     }
 
     private RecipeTypeNameConfig() {}
 
-    // 最近一次通过 JEI 填充到编码终端的"处理配方"的中文名称
-    public static volatile String lastProcessingName = null;
-    
-    public static void setLastProcessingName(String name) {
-        lastProcessingName = name;
+    public static void setLastProcessingName(String name) { setLastProviderSearchKey(name); }
+
+    public static void setLastProviderSearchKey(String name) {
+        if (name == null) {
+            lastProviderSearchKey = null;
+            return;
+        }
+        String resolved = resolveProviderSearchKey(name.trim());
+        lastProviderSearchKey = resolved.isBlank() ? null : resolved;
     }
 
-    /**
-     * 生成默认的配方类型映射
-     */
-    private static Map<String, String> getDefaultMappings() {
-        Map<String, String> mappings = new HashMap<>();
-        mappings.put("minecraft:smelting", "熔炉");
-        mappings.put("minecraft:blasting", "高炉");
-        mappings.put("minecraft:smoking", "烟熏");
-        mappings.put("minecraft:campfire_cooking", "营火");
-        mappings.put("smelting", "熔炉");
-        mappings.put("blasting", "高炉");
-        mappings.put("smoking", "烟熏");
-        return mappings;
+    public static void presetCraftingProviderSearchKey() {
+        setLastProviderSearchKey(resolveSearchKeyAlias(DEFAULT_CRAFTING_SEARCH_KEY));
     }
 
-    /**
-     * 创建默认配置文件模板
-     */
-    private static JsonObject createDefaultTemplate() {
-        JsonObject tmpl = new JsonObject();
-        getDefaultMappings().forEach(tmpl::addProperty);
-        return tmpl;
+    public static String consumeLastProviderSearchKey() {
+        String value = lastProviderSearchKey;
+        lastProviderSearchKey = null;
+        return value;
     }
 
-    /**
-     * 加载 JSON 配置文件
-     */
-    private static JsonObject loadJsonConfig(Path cfgPath) throws IOException, JsonSyntaxException {
-        if (!Files.exists(cfgPath)) return new JsonObject();
-        String json = Files.readString(cfgPath);
-        JsonObject obj = GSON.fromJson(json, JsonObject.class);
-        return obj != null ? obj : new JsonObject();
+    private static JsonObject loadJsonConfig(Path path) throws IOException {
+        if (!Files.exists(path)) return new JsonObject();
+        JsonObject object = GSON.fromJson(Files.readString(path), JsonObject.class);
+        return object == null ? new JsonObject() : object;
     }
 
-    /**
-     * 保存 JSON 配置到文件
-     */
-    private static void saveJsonConfig(Path cfgPath, JsonObject config) throws IOException {
-        Files.createDirectories(cfgPath.getParent());
-        Files.writeString(cfgPath, GSON.toJson(config));
+    private static void saveJsonConfig(Path path, JsonObject object) throws IOException {
+        Files.createDirectories(path.getParent());
+        Files.writeString(path, GSON.toJson(object));
     }
 
-    /**
-     * 加载配方类型名称映射
-     */
     public static synchronized void loadRecipeTypeNames() throws IOException {
-        Path cfgPath = FMLPaths.CONFIGDIR.get().resolve(CONFIG_PATH);
-        JsonObject config = loadJsonConfig(cfgPath);
-        
-        if (config.entrySet().isEmpty()) {
-            config = createDefaultTemplate();
-            saveJsonConfig(cfgPath, config);
-        }
-
-        Map<ResourceLocation, String> nameMap = new HashMap<>();
-        Map<String, String> alias = new HashMap<>();
-        
+        Path path = FMLPaths.CONFIGDIR.get().resolve(CONFIG_PATH);
+        if (!Files.exists(path)) saveJsonConfig(path, new JsonObject());
+        JsonObject config = loadJsonConfig(path);
+        Map<ResourceLocation, String> names = new HashMap<>();
+        Map<String, String> aliases = new HashMap<>();
         for (Map.Entry<String, JsonElement> entry : config.entrySet()) {
-            String key = entry.getKey();
-            JsonElement value = entry.getValue();
-            if (value != null && value.isJsonPrimitive()) {
-                String name = value.getAsString();
-                if (name == null || name.isBlank()) continue;
-                
-                if (key.contains(":")) {
-                    try {
-                        ResourceLocation rl = ResourceLocation.parse(key);
-                        nameMap.put(rl, name);
-                    } catch (Exception ignored) {}
-                } else {
-                    alias.put(key.toLowerCase(), name);
-                }
-            }
-        }
-
-        CUSTOM_NAMES.clear();
-        CUSTOM_NAMES.putAll(nameMap);
-        CUSTOM_ALIASES.clear();
-        CUSTOM_ALIASES.putAll(alias);
-    }
-
-    /**
-     * 新增或更新别名到名称的映射
-     */
-    public static synchronized boolean addOrUpdateAliasMapping(String aliasKey, String value) {
-        if (aliasKey == null || aliasKey.isBlank() || value == null || value.isBlank()) {
-            return false;
-        }
-        try {
-            Path cfgPath = FMLPaths.CONFIGDIR.get().resolve(CONFIG_PATH);
-            JsonObject config = loadJsonConfig(cfgPath);
-            String key = aliasKey.trim();
-            config.addProperty(key, value);
-            saveJsonConfig(cfgPath, config);
-
-            if (key.contains(":")) {
-                try {
-                    ResourceLocation rl = ResourceLocation.parse(key);
-                    CUSTOM_NAMES.put(rl, value);
-                } catch (Exception ignored) {}
+            if (!entry.getValue().isJsonPrimitive()) continue;
+            String value = entry.getValue().getAsString();
+            if (value.isBlank()) continue;
+            if (entry.getKey().contains(":")) {
+                try { names.put(new ResourceLocation(entry.getKey()), value); } catch (RuntimeException ignored) {}
             } else {
-                CUSTOM_ALIASES.put(key.toLowerCase(), value);
+                aliases.put(entry.getKey().toLowerCase(Locale.ROOT), value);
             }
+        }
+        CUSTOM_NAMES.clear();
+        CUSTOM_NAMES.putAll(names);
+        CUSTOM_ALIASES.clear();
+        CUSTOM_ALIASES.putAll(aliases);
+    }
+
+    public static synchronized boolean addOrUpdateRecipeTypeMapping(String key, String value) {
+        if (key == null || key.isBlank() || value == null || value.isBlank()) return false;
+        try {
+            Path path = FMLPaths.CONFIGDIR.get().resolve(CONFIG_PATH);
+            JsonObject config = loadJsonConfig(path);
+            config.addProperty(key.trim(), value.trim());
+            saveJsonConfig(path, config);
+            loadRecipeTypeNames();
             return true;
-        } catch (IOException | JsonSyntaxException e) {
-            ae2_auto_pattern_upload.LOGGER.error("配置更新失败: {}", e.getMessage());
+        } catch (IOException | RuntimeException error) {
+            ae2_auto_pattern_upload.LOGGER.error("配方类型映射保存失败", error);
             return false;
         }
     }
 
-    /**
-     * 按值精确匹配删除映射
-     */
-    public static synchronized int removeMappingsByCnValue(String delValue) {
-        if (delValue == null || delValue.trim().isEmpty()) return 0;
+    public static boolean addOrUpdateAliasMapping(String key, String value) {
+        return addOrUpdateRecipeTypeMapping(key, value);
+    }
+
+    public static List<RecipeTypeMapping> getRecipeTypeMappings() {
+        List<RecipeTypeMapping> result = new ArrayList<>();
+        CUSTOM_NAMES.forEach((key, value) -> result.add(new RecipeTypeMapping(key.toString(), value)));
+        CUSTOM_ALIASES.forEach((key, value) -> result.add(new RecipeTypeMapping(key, value)));
+        result.sort(Comparator.comparing(RecipeTypeMapping::key, String.CASE_INSENSITIVE_ORDER));
+        return List.copyOf(result);
+    }
+
+    public static synchronized boolean removeRecipeTypeMapping(String mappingKey) {
+        if (mappingKey == null || mappingKey.isBlank()) return false;
         try {
-            Path cfgPath = FMLPaths.CONFIGDIR.get().resolve(CONFIG_PATH);
-            JsonObject config = loadJsonConfig(cfgPath);
+            Path path = FMLPaths.CONFIGDIR.get().resolve(CONFIG_PATH);
+            JsonObject config = loadJsonConfig(path);
+            String storedKey = config.keySet().stream()
+                    .filter(key -> mappingKeysEqual(key, mappingKey.trim())).findFirst().orElse(null);
+            if (storedKey == null) return false;
+            config.remove(storedKey);
+            saveJsonConfig(path, config);
+            loadRecipeTypeNames();
+            return true;
+        } catch (IOException | RuntimeException ignored) {
+            return false;
+        }
+    }
 
-            List<String> toRemove = new ArrayList<>();
-            for (Map.Entry<String, JsonElement> entry : config.entrySet()) {
-                JsonElement value = entry.getValue();
-                if (value != null && value.isJsonPrimitive() && delValue.equals(value.getAsString())) {
-                    toRemove.add(entry.getKey());
-                }
+    public static synchronized int removeMappingsByCnValue(String value) {
+        if (value == null || value.isBlank()) return 0;
+        try {
+            Path path = FMLPaths.CONFIGDIR.get().resolve(CONFIG_PATH);
+            JsonObject config = loadJsonConfig(path);
+            List<String> keys = config.entrySet().stream()
+                    .filter(entry -> entry.getValue().isJsonPrimitive() && value.equals(entry.getValue().getAsString()))
+                    .map(Map.Entry::getKey).toList();
+            keys.forEach(config::remove);
+            if (!keys.isEmpty()) {
+                saveJsonConfig(path, config);
+                loadRecipeTypeNames();
             }
-
-            if (toRemove.isEmpty()) return 0;
-
-            toRemove.forEach(config::remove);
-            saveJsonConfig(cfgPath, config);
-
-            for (String key : toRemove) {
-                if (key.contains(":")) {
-                    try {
-                        ResourceLocation rl = ResourceLocation.parse(key);
-                        if (delValue.equals(CUSTOM_NAMES.get(rl))) {
-                            CUSTOM_NAMES.remove(rl);
-                        }
-                    } catch (Exception ignored) {}
-                } else {
-                    String lower = key.toLowerCase();
-                    if (delValue.equals(CUSTOM_ALIASES.get(lower))) {
-                        CUSTOM_ALIASES.remove(lower);
-                    }
-                }
-            }
-            return toRemove.size();
-        } catch (IOException | JsonSyntaxException e) {
-            ae2_auto_pattern_upload.LOGGER.error("配置删除失败: {}", e.getMessage());
+            return keys.size();
+        } catch (IOException | RuntimeException ignored) {
             return 0;
         }
     }
 
-    /**
-     * 映射配方类型到搜索关键字
-     */
-    public static String mapRecipeTypeToSearchKey(Recipe<?> recipe) {
-        if (recipe == null) return null;
-        RecipeType<?> type = recipe.getType();
-        ResourceLocation key = BuiltInRegistries.RECIPE_TYPE.getKey(type);
-        if (key == null) return null;
-        String path = key.getPath().toLowerCase();
-        return CUSTOM_ALIASES.getOrDefault(path, CUSTOM_NAMES.getOrDefault(key, path));
+    private static boolean mappingKeysEqual(String first, String second) {
+        if (first.contains(":") || second.contains(":")) {
+            try { return Objects.equals(new ResourceLocation(first), new ResourceLocation(second)); }
+            catch (RuntimeException ignored) { return false; }
+        }
+        return first.equalsIgnoreCase(second);
     }
 
-    /**
-     * 从未知配方类推导搜索关键字
-     */
-    public static String deriveSearchKeyFromUnknownRecipe(Object recipeBase) {
-        if (recipeBase == null) return null;
+    public static String resolveSearchKeyAlias(String rawKey) {
+        if (rawKey == null || rawKey.isBlank()) return null;
+        String normalized = rawKey.trim();
+        return CUSTOM_ALIASES.getOrDefault(normalized.toLowerCase(Locale.ROOT), normalized);
+    }
+
+    public static String resolveProviderSearchKey(String rawKey) {
+        String normalized = rawKey == null ? "" : rawKey.trim();
+        if (normalized.isEmpty()) return normalized;
+        String alias = resolveSearchKeyAlias(normalized);
+        if (!normalized.equals(alias)) return alias;
         try {
-            Class<?> cls = recipeBase.getClass();
-            String simple = cls.getSimpleName();
-            String pkg = cls.getName();
-
-            String namespace = null;
-            String lower = pkg.toLowerCase();
-            if (lower.contains("gtceu")) namespace = "gtceu";
-            else if (lower.contains("gregtech")) namespace = "gregtech";
-            else if (lower.contains("create")) namespace = "create";
-
-            String token = toSearchToken(simple);
-            String key = (namespace != null && token != null && !token.isBlank()) ?
-                    namespace + " " + token : token;
-            if (key == null || key.isBlank()) return null;
-            
-            String alias = CUSTOM_ALIASES.get(key.toLowerCase());
-            return alias != null && !alias.isBlank() ? alias : key;
-        } catch (Throwable ignored) {
-            return null;
+            String mapped = resolveRecipeTypeSearchKey(new ResourceLocation(normalized), null);
+            return mapped == null ? normalized : mapped;
+        } catch (RuntimeException ignored) {
+            return normalized;
         }
     }
 
-    /**
-     * 将类名转换为搜索关键字
-     */
-    private static String toSearchToken(String simpleName) {
-        if (simpleName == null || simpleName.isBlank()) return null;
-        String s = simpleName
-                .replaceAll("Recipe(s)?$", "")
-                .replaceAll("Category$", "")
-                .replaceAll("JEI$", "")
-                .replaceAll("(?<!^)([A-Z])", " $1")
-                .toLowerCase()
-                .trim();
-        return s.isBlank() ? null : s;
+    public static String mapRecipeTypeToSearchKey(Recipe<?> recipe) {
+        return recipe == null ? null : resolveRecipeTypeSearchKey(resolveRecipeTypeId(recipe.getType()), null);
+    }
+
+    public static String resolveRecipeTypeSearchKey(ResourceLocation id, String displayName) {
+        if (id == null) return displayName;
+        String custom = CUSTOM_NAMES.get(id);
+        if (custom != null && !custom.isBlank()) return custom;
+        String alias = CUSTOM_ALIASES.get(id.getPath().toLowerCase(Locale.ROOT));
+        if (alias != null && !alias.isBlank()) return alias;
+        return displayName == null || displayName.isBlank() ? id.getPath() : displayName;
+    }
+
+    private static ResourceLocation resolveRecipeTypeId(RecipeType<?> type) {
+        if (type == null) return null;
+        ResourceLocation id = BuiltInRegistries.RECIPE_TYPE.getKey(type);
+        if (id != null) return id;
+        try { return new ResourceLocation(type.toString()); } catch (RuntimeException ignored) { return null; }
+    }
+
+    public static String mapGTCEuRecipeToSearchKey(Object recipe) {
+        try {
+            Object type = recipe.getClass().getMethod("getType").invoke(recipe);
+            return resolveRecipeTypeSearchKey(new ResourceLocation(String.valueOf(type)), null);
+        } catch (Throwable ignored) { return null; }
+    }
+
+    public static String deriveSearchKeyFromUnknownRecipe(Object recipe) {
+        if (recipe == null) return null;
+        try {
+            Object type = recipe.getClass().getMethod("getType").invoke(recipe);
+            if (type instanceof RecipeType<?> recipeType) {
+                String mapped = resolveRecipeTypeSearchKey(resolveRecipeTypeId(recipeType), null);
+                if (mapped != null && !mapped.isBlank()) return mapped;
+            }
+        } catch (Throwable ignored) {}
+        String simpleName = recipe.getClass().getSimpleName()
+                .replaceAll("Recipe(s)?$|Category$|JEI$", "")
+                .replaceAll("(?<!^)([A-Z])", " $")
+                .toLowerCase(Locale.ROOT).trim();
+        return simpleName.isBlank() ? null : CUSTOM_ALIASES.getOrDefault(simpleName, simpleName);
     }
 }

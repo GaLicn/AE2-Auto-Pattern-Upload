@@ -3,6 +3,7 @@ package com.gali.mixin.jei;
 import appeng.integration.modules.jei.transfer.EncodePatternTransferHandler;
 import appeng.integration.modules.jeirei.EncodingHelper;
 import appeng.menu.me.items.PatternEncodingTermMenu;
+import com.gali.compat.JeiRuntimeCompat;
 import com.gali.util.RecipeTypeNameConfig;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.recipe.transfer.IRecipeTransferError;
@@ -29,14 +30,17 @@ public abstract class EncodePatternTransferHandlerMixin {
                                       CallbackInfoReturnable<IRecipeTransferError> cir) {
         if (!doTransfer) return;
         
-        String name = null;
-        if (recipeBase instanceof Recipe<?> recipe) {
-            // 仅记录处理配方（非合成配方）
-            if (EncodingHelper.isSupportedCraftingRecipe(recipe)) return;
-            name = RecipeTypeNameConfig.mapRecipeTypeToSearchKey(recipe);
-        } else {
-            // 非原版 Recipe<?> 的 JEI 条目，尝试从类名推导关键词
-            name = RecipeTypeNameConfig.deriveSearchKeyFromUnknownRecipe(recipeBase);
+        Recipe<?> recipe = recipeBase instanceof Recipe<?> value ? value : null;
+        if (recipe != null && EncodingHelper.isSupportedCraftingRecipe(recipe)) {
+            RecipeTypeNameConfig.presetCraftingProviderSearchKey();
+            return;
+        }
+
+        // 优先读取 JEI 实际分类标题，再使用配方类型或类名作为兼容回退。
+        String name = JeiRuntimeCompat.getRecipeCategoryTitle(recipeBase);
+        if (name == null || name.isBlank()) {
+            name = recipe != null ? RecipeTypeNameConfig.mapRecipeTypeToSearchKey(recipe)
+                    : RecipeTypeNameConfig.deriveSearchKeyFromUnknownRecipe(recipeBase);
         }
         
         if (name != null && !name.isBlank()) {

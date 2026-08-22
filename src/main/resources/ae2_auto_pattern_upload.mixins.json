@@ -12,7 +12,8 @@
     "client.PatternEncodingTermScreenMixin",
     "client.accessor.AEBaseScreenAccessor",
     "client.accessor.AbstractContainerScreenAccessor",
-    "client.accessor.ScreenAccessor"
+    "client.accessor.ScreenAccessor",
+    "client.accessor.MEStorageScreenAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

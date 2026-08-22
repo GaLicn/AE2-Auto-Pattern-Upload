@@ -8,6 +8,7 @@ import appeng.helpers.patternprovider.PatternContainer;
 import appeng.menu.me.items.PatternEncodingTermMenu;
 import com.gali.mixin.PatternEncodingTermMenuAccessor;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
@@ -19,17 +20,27 @@ import java.util.function.Supplier;
  */
 public class UploadPatternPacket {
     private final long providerId;
+    private final boolean showStatusMessage;
+    private final String providerName;
     
     public UploadPatternPacket(long providerId) {
+        this(providerId, false, "");
+    }
+
+    public UploadPatternPacket(long providerId, boolean showStatusMessage, String providerName) {
         this.providerId = providerId;
+        this.showStatusMessage = showStatusMessage;
+        this.providerName = providerName == null ? "" : providerName;
     }
     
     public static UploadPatternPacket decode(FriendlyByteBuf buf) {
-        return new UploadPatternPacket(buf.readLong());
+        return new UploadPatternPacket(buf.readLong(), buf.readBoolean(), buf.readUtf(256));
     }
     
     public static void encode(UploadPatternPacket msg, FriendlyByteBuf buf) {
         buf.writeLong(msg.providerId);
+        buf.writeBoolean(msg.showStatusMessage);
+        buf.writeUtf(msg.providerName, 256);
     }
     
     public static void handle(UploadPatternPacket msg, Supplier<NetworkEvent.Context> ctx) {
@@ -41,6 +52,7 @@ public class UploadPatternPacket {
             
             long providerId = msg.providerId;
             
+            boolean uploaded = false;
             try {
                 // 通过Mixin访问器获取编码终端的样板输出槽
                 PatternEncodingTermMenuAccessor accessor = (PatternEncodingTermMenuAccessor) menu;
@@ -95,7 +107,6 @@ public class UploadPatternPacket {
                 }
                 
                 // 尝试将样板插入到第一个空槽位
-                boolean uploaded = false;
                 for (int i = 0; i < providerInv.size(); i++) {
                     if (providerInv.getStackInSlot(i).isEmpty()) {
                         ItemStack copy = encodedPattern.copy();
@@ -113,6 +124,13 @@ public class UploadPatternPacket {
                 
             } catch (Throwable t) {
                 t.printStackTrace();
+            } finally {
+                // 自动上传无论成功或失败都返回一次明确提示。
+                if (msg.showStatusMessage) {
+                player.sendSystemMessage(Component.translatable(
+                        uploaded ? "gali.screen.upload.auto_upload_success" : "gali.screen.upload.auto_upload_failed",
+                        msg.providerName.isBlank() ? "#" + msg.providerId : msg.providerName));
+                }
             }
         });
         ctx.get().setPacketHandled(true);
