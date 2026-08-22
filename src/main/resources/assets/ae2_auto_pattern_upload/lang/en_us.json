@@ -1,15 +1,4 @@
 {
-  "itemGroup.ae2_auto_pattern_upload": "Example Mod Tab",
-  "block.ae2_auto_pattern_upload.example_block": "Example Block",
-  "item.ae2_auto_pattern_upload.example_item": "Example Item",
-
-  "ae2_auto_pattern_upload.configuration.title": "AE2 Auto Pattern Upload Configs",
-  "ae2_auto_pattern_upload.configuration.section.ae2_auto_pattern_upload.common.toml": "AE2 Auto Pattern Upload Configs",
-  "ae2_auto_pattern_upload.configuration.section.ae2_auto_pattern_upload.common.toml.title": "AE2 Auto Pattern Upload Configs",
-  "ae2_auto_pattern_upload.configuration.items": "Item List",
-  "ae2_auto_pattern_upload.configuration.logDirtBlock": "Log Dirt Block",
-  "ae2_auto_pattern_upload.configuration.magicNumberIntroduction": "Magic Number Text",
-  "ae2_auto_pattern_upload.configuration.magicNumber": "Magic Number",
   "ae2_auto_pattern_upload.button.upload": "Upload pattern to provider",
   "ae2_auto_pattern_upload.screen.choose_provider.title": "Choose pattern provider",
   "ae2_auto_pattern_upload.screen.search": "Search provider",
