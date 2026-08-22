@@ -43,12 +43,10 @@ public class ProviderSelectScreen extends Screen {
     private static final String UI_CONFIG = "ae2_auto_pattern_upload/provider_screen.json";
     private static final String PINNED_KEY = "pinned";
     private static final String AUTO_UPLOAD_KEY = "auto_upload_unique_match";
-    private static final String PROCESSING_BUTTONS_KEY = "show_processing_buttons";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final Set<String> pinnedProviders = new HashSet<>();
     private static final Pattern NATURAL_PATTERN = Pattern.compile("(\\D*)(\\d*)");
     private static boolean autoUploadUniqueMatchEnabled = true;
-    private static boolean showProcessingButtonsEnabled = true;
 
     static {
         loadUiConfig();
@@ -64,7 +62,6 @@ public class ProviderSelectScreen extends Screen {
     private final ScreenStyle aeStyle;
     private ResizableAETextField searchBox;
     private ResizableAETextField mappingValueInput;
-    private Button processingButtonsToggleButton;
     private Button autoUploadToggleButton;
     private String query;
     private int page;
@@ -182,14 +179,9 @@ public class ProviderSelectScreen extends Screen {
 
         int controlsWidth = Math.min(480, Math.max(240, width - 20));
         int controlsX = centerX - controlsWidth / 2;
-        int toggleGap = 5;
-        int toggleWidth = (controlsWidth - toggleGap) / 2;
+        int toggleWidth = Math.min(240, controlsWidth);
         int toggleY = navigationY + 30;
-        processingButtonsToggleButton = new AE2Button(controlsX, toggleY, toggleWidth, BUTTON_HEIGHT,
-                processingButtonsLabel(), ignored -> toggleProcessingButtons());
-        processingButtonsToggleButton.setTooltip(processingButtonsTooltip());
-        addRenderableWidget(processingButtonsToggleButton);
-        autoUploadToggleButton = new AE2Button(controlsX + toggleWidth + toggleGap, toggleY,
+        autoUploadToggleButton = new AE2Button(centerX - toggleWidth / 2, toggleY,
                 toggleWidth, BUTTON_HEIGHT, autoUploadLabel(), ignored -> toggleAutoUpload());
         autoUploadToggleButton.setTooltip(autoUploadTooltip());
         addRenderableWidget(autoUploadToggleButton);
@@ -242,16 +234,6 @@ public class ProviderSelectScreen extends Screen {
         }
     }
 
-    private Component processingButtonsLabel() {
-        return Component.translatable("ae2_auto_pattern_upload.screen.processing_buttons",
-                Component.translatable(showProcessingButtonsEnabled
-                        ? "ae2_auto_pattern_upload.state.on" : "ae2_auto_pattern_upload.state.off"));
-    }
-
-    private Tooltip processingButtonsTooltip() {
-        return Tooltip.create(Component.translatable("ae2_auto_pattern_upload.screen.processing_buttons.tooltip"));
-    }
-
     private Component autoUploadLabel() {
         return Component.translatable("ae2_auto_pattern_upload.screen.auto_upload_unique",
                 Component.translatable(autoUploadUniqueMatchEnabled
@@ -260,13 +242,6 @@ public class ProviderSelectScreen extends Screen {
 
     private Tooltip autoUploadTooltip() {
         return Tooltip.create(Component.translatable("ae2_auto_pattern_upload.screen.auto_upload_unique.tooltip"));
-    }
-
-    private void toggleProcessingButtons() {
-        showProcessingButtonsEnabled = !showProcessingButtonsEnabled;
-        saveUiConfig();
-        processingButtonsToggleButton.setMessage(processingButtonsLabel());
-        processingButtonsToggleButton.setTooltip(processingButtonsTooltip());
     }
 
     private void toggleAutoUpload() {
@@ -395,9 +370,6 @@ public class ProviderSelectScreen extends Screen {
             if (object.has(AUTO_UPLOAD_KEY)) {
                 autoUploadUniqueMatchEnabled = object.get(AUTO_UPLOAD_KEY).getAsBoolean();
             }
-            if (object.has(PROCESSING_BUTTONS_KEY)) {
-                showProcessingButtonsEnabled = object.get(PROCESSING_BUTTONS_KEY).getAsBoolean();
-            }
         } catch (IOException | RuntimeException ignored) {
             // 配置读取失败时使用默认界面设置。
         }
@@ -412,7 +384,6 @@ public class ProviderSelectScreen extends Screen {
             pinnedProviders.forEach(pinned::add);
             object.add(PINNED_KEY, pinned);
             object.addProperty(AUTO_UPLOAD_KEY, autoUploadUniqueMatchEnabled);
-            object.addProperty(PROCESSING_BUTTONS_KEY, showProcessingButtonsEnabled);
             Files.writeString(path, GSON.toJson(object));
         } catch (IOException ignored) {
             // 配置保存失败不影响本次界面操作。

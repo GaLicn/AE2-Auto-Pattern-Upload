@@ -4,8 +4,6 @@
   "ae2_auto_pattern_upload.screen.search": "搜索供应器",
   "ae2_auto_pattern_upload.screen.no_providers": "没有可用的供应器",
   "ae2_auto_pattern_upload.screen.cancel.tooltip": "返回样板编码终端",
-  "ae2_auto_pattern_upload.screen.processing_buttons": "样板按钮：%s",
-  "ae2_auto_pattern_upload.screen.processing_buttons.tooltip": "样板终端按钮显示设置",
   "ae2_auto_pattern_upload.screen.auto_upload_unique": "自动上传：%s",
   "ae2_auto_pattern_upload.screen.auto_upload_unique.tooltip": "仅匹配到一个供应器时自动上传",
   "ae2_auto_pattern_upload.state.on": "开",

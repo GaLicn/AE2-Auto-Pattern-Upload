@@ -15,8 +15,6 @@
   "ae2_auto_pattern_upload.screen.search": "Search provider",
   "ae2_auto_pattern_upload.screen.no_providers": "No available providers",
   "ae2_auto_pattern_upload.screen.cancel.tooltip": "Return to pattern encoding terminal",
-  "ae2_auto_pattern_upload.screen.processing_buttons": "Pattern buttons: %s",
-  "ae2_auto_pattern_upload.screen.processing_buttons.tooltip": "Pattern terminal button display",
   "ae2_auto_pattern_upload.screen.auto_upload_unique": "Auto upload: %s",
   "ae2_auto_pattern_upload.screen.auto_upload_unique.tooltip": "Upload automatically when exactly one provider matches",
   "ae2_auto_pattern_upload.screen.mapping.value": "Provider search term",

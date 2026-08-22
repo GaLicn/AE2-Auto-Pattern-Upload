@@ -38,9 +38,52 @@ public abstract class PatternEncodingTermScreenMixin<T extends AEBaseMenu> {
         if (ae2apu$uploadButton == null) {
             ae2apu$uploadButton = new IconButton(button ->
                     PacketDistributor.sendToServer(RequestProvidersListC2SPacket.INSTANCE)) {
+                private final float scale = 0.75f;
+
                 @Override
                 protected Icon getIcon() {
                     return Icon.ARROW_UP;
+                }
+
+                @Override
+                public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+                    if (!visible) {
+                        return;
+                    }
+                    var icon = getIcon();
+                    var blitter = icon.getBlitter();
+                    if (!active) {
+                        blitter.opacity(0.5f);
+                    }
+
+                    // EAEP 按 0.75 倍绘制 16x16 图标，避免 IconButton 被目标尺寸拉伸。
+                    width = Math.round(16 * scale);
+                    height = Math.round(16 * scale);
+                    RenderSystem.disableDepthTest();
+                    RenderSystem.enableBlend();
+                    if (isFocused()) {
+                        graphics.fill(getX() - 1, getY() - 1, getX() + width + 1, getY(), 0xFFFFFFFF);
+                        graphics.fill(getX() - 1, getY(), getX(), getY() + height, 0xFFFFFFFF);
+                        graphics.fill(getX() + width, getY(), getX() + width + 1, getY() + height, 0xFFFFFFFF);
+                        graphics.fill(getX() - 1, getY() + height, getX() + width + 1, getY() + height + 1,
+                                0xFFFFFFFF);
+                    }
+
+                    var pose = graphics.pose();
+                    pose.pushPose();
+                    pose.translate(getX(), getY(), 0.0F);
+                    pose.scale(scale, scale, 1.0F);
+                    if (!isDisableBackground()) {
+                        Icon.TOOLBAR_BUTTON_BACKGROUND.getBlitter().dest(0, 0).blit(graphics);
+                    }
+                    blitter.dest(0, 0).blit(graphics);
+                    pose.popPose();
+                    RenderSystem.enableDepthTest();
+                }
+
+                @Override
+                public Rect2i getTooltipArea() {
+                    return new Rect2i(getX(), getY(), Math.round(16 * scale), Math.round(16 * scale));
                 }
             };
             ae2apu$uploadButton.setTooltip(Tooltip.create(
@@ -67,16 +110,19 @@ public abstract class PatternEncodingTermScreenMixin<T extends AEBaseMenu> {
             Rect2i bounds = new Rect2i(screen.ae2apu$getLeftPos(), screen.ae2apu$getTopPos(),
                     screen.ae2apu$getImageWidth(), screen.ae2apu$getImageHeight());
             var position = encodeWidget.resolve(bounds);
-            int width = Math.max(10, encodeWidget.getWidth() > 0 ? encodeWidget.getWidth() : 12);
-            int height = Math.max(10, encodeWidget.getHeight() > 0 ? encodeWidget.getHeight() : 12);
-            ae2apu$uploadButton.setWidth(width);
-            ae2apu$uploadButton.setHeight(height);
-            ae2apu$uploadButton.setX(position.getX() - width - 2);
+            int baseWidth = encodeWidget.getWidth() > 0 ? encodeWidget.getWidth() : 12;
+            int baseHeight = encodeWidget.getHeight() > 0 ? encodeWidget.getHeight() : 12;
+            int targetWidth = Math.max(10, Math.round(baseWidth * 0.75f));
+            int targetHeight = Math.max(10, Math.round(baseHeight * 0.75f));
+            ae2apu$uploadButton.setWidth(targetWidth);
+            ae2apu$uploadButton.setHeight(targetHeight);
+            // 按 EAEP 使用原始 encodePattern 宽度计算左侧间距。
+            ae2apu$uploadButton.setX(position.getX() - baseWidth - 2);
             ae2apu$uploadButton.setY(position.getY());
         } catch (Throwable ignored) {
             ae2apu$uploadButton.setWidth(12);
             ae2apu$uploadButton.setHeight(12);
-            ae2apu$uploadButton.setX(screen.ae2apu$getLeftPos() + screen.ae2apu$getImageWidth() - 22);
+            ae2apu$uploadButton.setX(screen.ae2apu$getLeftPos() + screen.ae2apu$getImageWidth() - 18);
             ae2apu$uploadButton.setY(screen.ae2apu$getTopPos() + 88);
         }
     }
