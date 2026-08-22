@@ -207,7 +207,12 @@ public class ProviderSelectScreen extends Screen {
     }
 
     private void choose(Group group) {
-        PacketDistributor.sendToServer(new UploadEncodedPatternC2SPacket(group.representativeId));
+        PacketDistributor.sendToServer(new UploadEncodedPatternC2SPacket(group.representativeId, false, group.name));
+        onClose();
+    }
+
+    private void chooseAutomatically(Group group) {
+        PacketDistributor.sendToServer(new UploadEncodedPatternC2SPacket(group.representativeId, true, group.name));
         onClose();
     }
 
@@ -257,7 +262,7 @@ public class ProviderSelectScreen extends Screen {
         }
         autoUploadAttempted = true;
         if (!query.isBlank() && lastMatchCount == 1) {
-            choose(filteredGroups.get(0));
+            chooseAutomatically(filteredGroups.get(0));
         }
     }
 

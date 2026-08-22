@@ -36,5 +36,9 @@
   "ae2_auto_pattern_upload.screen.mapping.deleted": "Mapping deleted",
   "ae2_auto_pattern_upload.screen.mapping.delete_failed": "Failed to delete mapping",
   "ae2_auto_pattern_upload.screen.mapping.reloaded": "Mappings reloaded",
+  "ae2_auto_pattern_upload.screen.upload.auto_success": "Automatically uploaded to the only matching pattern provider: %s",
+  "ae2_auto_pattern_upload.screen.upload.auto_failed": "Automatic upload to the pattern provider failed: %s",
   "ae2_auto_pattern_upload.provider.default": "Unnamed provider"
+  ,"key.ae2_auto_pattern_upload.fill_search": "Fill AE2 search field from JEI"
+  ,"key.categories.ae2_auto_pattern_upload": "AE2 Auto Pattern Upload"
 }

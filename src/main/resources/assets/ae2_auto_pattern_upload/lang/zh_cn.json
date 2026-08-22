@@ -24,5 +24,9 @@
   "ae2_auto_pattern_upload.screen.mapping.save_failed": "映射保存失败",
   "ae2_auto_pattern_upload.screen.mapping.deleted": "映射已删除",
   "ae2_auto_pattern_upload.screen.mapping.delete_failed": "映射删除失败",
-  "ae2_auto_pattern_upload.screen.mapping.reloaded": "映射已重新加载"
+  "ae2_auto_pattern_upload.screen.mapping.reloaded": "映射已重新加载",
+  "ae2_auto_pattern_upload.screen.upload.auto_success": "已自动上传到唯一匹配的样板供应器：%s",
+  "ae2_auto_pattern_upload.screen.upload.auto_failed": "自动上传到样板供应器失败：%s",
+  "key.ae2_auto_pattern_upload.fill_search": "从 JEI 填充 AE2 搜索栏",
+  "key.categories.ae2_auto_pattern_upload": "AE2 自动上传样板"
 }
