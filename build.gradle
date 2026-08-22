@@ -28,7 +28,7 @@ sourceSets.main.resources {
 }
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    maven { url = uri('https://www.cursemaven.com') }
 }
 
 base {
@@ -111,6 +111,10 @@ configurations {
 }
 
 dependencies {
+    implementation "curse.maven:guideme-1173950:8204880"
+    implementation "curse.maven:applied-energistics-2-223794:8257570"
+    implementation "curse.maven:jade-324717:8651070"
+    implementation "curse.maven:jei-238222:8676045"
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
