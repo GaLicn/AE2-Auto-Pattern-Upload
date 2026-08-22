@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** 捕获 JEI 填充样板时的配方对象，并记录其 JEI 分类标题。 */
-@Mixin(targets = "tamaized.ae2jeiintegration.integration.modules.jei.transfer.EncodePatternTransferHandler",
+@Mixin(targets = "appeng.client.integrations.jei.transfer.EncodePatternTransferHandler",
         remap = false)
 @Pseudo
 public abstract class AE2JeiEncodePatternTransferHandlerMixin {

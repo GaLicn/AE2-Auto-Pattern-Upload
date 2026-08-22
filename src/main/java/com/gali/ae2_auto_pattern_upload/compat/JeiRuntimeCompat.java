@@ -9,6 +9,7 @@ import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.gui.input.IClickableIngredientInternal;
 import mezz.jei.gui.overlay.IngredientListOverlay;
 import mezz.jei.gui.overlay.bookmarks.BookmarkOverlay;
+import net.minecraft.world.item.crafting.RecipeHolder;
 
 import java.util.List;
 import java.util.Objects;
@@ -31,12 +32,22 @@ public final class JeiRuntimeCompat {
             return null;
         }
         try {
+            // AE2 26 会把部分 JEI 配方包装成 RecipeHolder，先还原实际配方类型。
+            Object actualRecipe = recipe instanceof RecipeHolder<?> holder ? holder.value() : recipe;
             IRecipeManager manager = current.getRecipeManager();
-            List<IRecipeType<?>> candidates = current.getJeiHelpers().getAllRecipeTypes()
-                    .filter(type -> type.getRecipeClass().isInstance(recipe))
+            List<IRecipeType<?>> allTypes = current.getJeiHelpers().getAllRecipeTypes().toList();
+            List<IRecipeType<?>> candidates = allTypes.stream()
+                    .filter(type -> type.getRecipeClass().isInstance(actualRecipe))
                     .toList();
-            IRecipeType<?> matched = candidates.size() == 1 ? candidates.getFirst()
-                    : candidates.stream().filter(type -> contains(manager, type, recipe)).findFirst().orElse(null);
+            IRecipeType<?> matched = candidates.size() == 1 ? candidates.getFirst() : candidates.stream()
+                    .filter(type -> contains(manager, type, actualRecipe) || contains(manager, type, recipe))
+                    .findFirst().orElse(null);
+            if (matched == null) {
+                // 某些 JEI 类型声明的是包装类，此时必须跳过 recipeClass 过滤直接查找。
+                matched = allTypes.stream()
+                        .filter(type -> contains(manager, type, actualRecipe) || contains(manager, type, recipe))
+                        .findFirst().orElse(null);
+            }
             if (matched == null) {
                 return null;
             }
@@ -105,7 +116,15 @@ public final class JeiRuntimeCompat {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static boolean contains(IRecipeManager manager, IRecipeType<?> type, Object recipe) {
-        return manager.createRecipeLookup((IRecipeType) type).includeHidden().get()
-                .anyMatch(candidate -> candidate == recipe || Objects.equals(candidate, recipe));
+        if (recipe == null) {
+            return false;
+        }
+        try {
+            return manager.createRecipeLookup((IRecipeType) type).includeHidden().get()
+                    .anyMatch(candidate -> candidate == recipe || Objects.equals(candidate, recipe)
+                            || candidate instanceof RecipeHolder<?> holder && Objects.equals(holder.value(), recipe));
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 }
