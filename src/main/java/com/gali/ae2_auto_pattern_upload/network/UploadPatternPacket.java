@@ -7,11 +7,7 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 
-import com.glodblock.github.client.gui.container.ContainerFluidPatternTerminal;
-import com.glodblock.github.client.gui.container.ContainerFluidPatternTerminalEx;
-import com.glodblock.github.client.gui.container.base.FCContainerEncodeTerminal;
 import com.glodblock.github.common.item.ItemFluidEncodedPattern;
-import com.glodblock.github.inventory.item.IItemPatternTerminal;
 
 import appeng.api.AEApi;
 import appeng.api.networking.IGrid;
@@ -116,7 +112,12 @@ public class UploadPatternPacket implements IMessage {
                 .definitions()
                 .items()
                 .encodedPattern()
-                .isSameAs(stack)) {
+                .isSameAs(stack)
+                || AEApi.instance()
+                    .definitions()
+                    .items()
+                    .encodedUltimatePattern()
+                    .isSameAs(stack)) {
                 return true;
             }
             return stack.getItem() instanceof ItemFluidEncodedPattern;
@@ -125,22 +126,6 @@ public class UploadPatternPacket implements IMessage {
         private IActionHost resolveTerminal(Container container) {
             if (container instanceof ContainerPatternTerm term) {
                 return term.getPatternTerminal();
-            }
-            if (container instanceof ContainerPatternTermEx termEx) {
-                return termEx.getPatternTerminal();
-            }
-            if (container instanceof ContainerFluidPatternTerminal fluidTerm) {
-                return fromPatternTerminal(fluidTerm.getPatternTerminal());
-            }
-            if (container instanceof ContainerFluidPatternTerminalEx fluidTermEx) {
-                return fromPatternTerminal(fluidTermEx.getPatternTerminal());
-            }
-            return null;
-        }
-
-        private IActionHost fromPatternTerminal(IItemPatternTerminal terminal) {
-            if (terminal instanceof IActionHost actionHost) {
-                return actionHost;
             }
             return null;
         }
@@ -153,14 +138,9 @@ public class UploadPatternPacket implements IMessage {
                     return (SlotRestrictedInput) field.get(term);
                 }
                 if (container instanceof ContainerPatternTermEx termEx) {
-                    Field field = ContainerPatternTermEx.class.getDeclaredField("patternSlotOUT");
+                    Field field = ContainerPatternTerm.class.getDeclaredField("patternSlotOUT");
                     field.setAccessible(true);
-                    return (SlotRestrictedInput) field.get(termEx);
-                }
-                if (container instanceof FCContainerEncodeTerminal fcContainer) {
-                    Field field = FCContainerEncodeTerminal.class.getDeclaredField("patternSlotOUT");
-                    field.setAccessible(true);
-                    return (SlotRestrictedInput) field.get(fcContainer);
+                    return (SlotRestrictedInput) field.get((ContainerPatternTerm) termEx);
                 }
             } catch (Exception ignored) {}
             return null;
