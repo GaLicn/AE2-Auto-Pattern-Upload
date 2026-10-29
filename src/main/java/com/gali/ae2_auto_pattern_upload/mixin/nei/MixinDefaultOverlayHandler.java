@@ -12,9 +12,15 @@ import com.gali.ae2_auto_pattern_upload.util.RecipeNameUtil;
 import codechicken.nei.recipe.DefaultOverlayHandler;
 import codechicken.nei.recipe.IRecipeHandler;
 
+/**
+ * 在 NEI 配方转移前记录当前配方名称
+ */
 @Mixin(value = DefaultOverlayHandler.class, remap = false)
 public abstract class MixinDefaultOverlayHandler {
 
+    /**
+     * 在配方转移前缓存当前配方名称
+     */
     @Inject(
         method = "transferRecipe(Lnet/minecraft/client/gui/inventory/GuiContainer;Lcodechicken/nei/recipe/IRecipeHandler;II)I",
         at = @At("HEAD"))

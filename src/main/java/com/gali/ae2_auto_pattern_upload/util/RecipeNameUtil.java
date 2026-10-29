@@ -24,9 +24,12 @@ import com.google.gson.JsonObject;
 
 import codechicken.nei.recipe.IRecipeHandler;
 import cpw.mods.fml.common.Loader;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 
 /**
  * 配方名称映射工具，兼容 1.7.10 环境。
+ * 注意：此工具仅在客户端使用，服务器端不会加载或保存配置
  */
 public final class RecipeNameUtil {
 
@@ -37,20 +40,39 @@ public final class RecipeNameUtil {
     private static final Map<String, String> RAW_MAPPINGS = new HashMap<String, String>();
     private static final Map<String, String> LOOKUP_MAPPINGS = new HashMap<String, String>();
 
-    private static final Path CONFIG_FILE;
+    private static Path CONFIG_FILE = null;
 
     private static final Pattern CAMEL_CASE_SPLITTER = Pattern.compile("(?<!^)([A-Z])");
 
     private static String lastRecipeName = null;
     private static String lastRawRecipeId = null;
 
-    static {
+    private static boolean isClientSide = false;
+    private static boolean initialized = false;
+
+    /**
+     * 初始化配置（仅在客户端调用）
+     */
+    @SideOnly(Side.CLIENT)
+    public static synchronized void initClient() {
+        if (initialized) {
+            return;
+        }
+        isClientSide = true;
         Path configDir = Loader.instance()
             .getConfigDir()
             .toPath();
         CONFIG_FILE = configDir.resolve("ae2_auto_pattern_upload")
             .resolve("recipe_names.json");
         loadMappings();
+        initialized = true;
+    }
+
+    /**
+     * 检查是否在客户端
+     */
+    private static boolean isClient() {
+        return isClientSide;
     }
 
     private RecipeNameUtil() {}
@@ -76,7 +98,11 @@ public final class RecipeNameUtil {
         lastRawRecipeId = null;
     }
 
+    @SideOnly(Side.CLIENT)
     public static synchronized boolean addOrUpdateMapping(String key, String value) {
+        if (!isClient()) {
+            return false;
+        }
         if (key == null || key.trim()
             .isEmpty()
             || value == null
@@ -90,7 +116,11 @@ public final class RecipeNameUtil {
         return true;
     }
 
+    @SideOnly(Side.CLIENT)
     public static synchronized int removeMappingsByCnValue(String cnValue) {
+        if (!isClient()) {
+            return 0;
+        }
         if (cnValue == null || cnValue.trim()
             .isEmpty()) {
             return 0;
@@ -113,7 +143,11 @@ public final class RecipeNameUtil {
         return removed;
     }
 
+    @SideOnly(Side.CLIENT)
     public static synchronized void reloadMappings() {
+        if (!isClient()) {
+            return;
+        }
         loadMappings();
     }
 
@@ -121,11 +155,15 @@ public final class RecipeNameUtil {
         return Collections.unmodifiableMap(RAW_MAPPINGS);
     }
 
+    @SideOnly(Side.CLIENT)
     private static synchronized void loadMappings() {
+        if (!isClient()) {
+            return;
+        }
         RAW_MAPPINGS.clear();
         LOOKUP_MAPPINGS.clear();
 
-        if (!Files.exists(CONFIG_FILE)) {
+        if (CONFIG_FILE == null || !Files.exists(CONFIG_FILE)) {
             writeTemplate();
             return;
         }
@@ -159,12 +197,19 @@ public final class RecipeNameUtil {
         }
     }
 
+    @SideOnly(Side.CLIENT)
     private static void writeTemplate() {
+        if (!isClient()) {
+            return;
+        }
         JsonObject template = new JsonObject();
         template.addProperty("example.crafting", "example_crafting");
         template.addProperty("example.processing", "example_processing");
 
         try {
+            if (CONFIG_FILE == null) {
+                return;
+            }
             Path parent = CONFIG_FILE.getParent();
             if (parent != null && !Files.exists(parent)) {
                 Files.createDirectories(parent);
@@ -181,12 +226,19 @@ public final class RecipeNameUtil {
         }
     }
 
+    @SideOnly(Side.CLIENT)
     private static void saveMappings() {
+        if (!isClient()) {
+            return;
+        }
         JsonObject obj = new JsonObject();
         for (Map.Entry<String, String> entry : RAW_MAPPINGS.entrySet()) {
             obj.addProperty(entry.getKey(), entry.getValue());
         }
         try {
+            if (CONFIG_FILE == null) {
+                return;
+            }
             Path parent = CONFIG_FILE.getParent();
             if (parent != null && !Files.exists(parent)) {
                 Files.createDirectories(parent);
@@ -360,7 +412,7 @@ public final class RecipeNameUtil {
         return null;
     }
 
-    private static String normalizeKey(String key) {
+    public static String normalizeKey(String key) {
         // 统一把 . _ - : 都替换成空格，然后合并多余空格
         String normalized = key.trim()
             .toLowerCase(Locale.ROOT)

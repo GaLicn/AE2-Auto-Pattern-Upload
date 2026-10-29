@@ -5,11 +5,35 @@
   "compatibilityLevel": "JAVA_8",
   "refmap": "mixins.ae2_auto_pattern_upload.refmap.json",
   "mixins": [
+    "ae2.BlockQuantumLinkChamberMixin",
+    "ae2.ContainerPatternTermMixin",
+    "ae2.MixinAEBaseTileBlock",
+    "ae2.MixinPartPlacement",
+    "ae2.PatternMultiplierHelperMixin",
+    "ae2.QuantumClusterMixin",
+    "ae2.accessor.AEBaseContainerAccessor",
+    "ae2.accessor.ContainerPatternTermAccessor",
+    "ae2.accessor.GuiContainerAccessor",
+    "ae2.accessor.QuantumClusterAccessor",
+    "gt.DisableDebuff_Mixin",
+    "gt.ToolVajraMixin",
+    "jabba.DisableDollyDebuff_Mixin",
+    "ph.ItemProgrammingCircuitMixin",
+    "ph.PatternDualInputHatchMixin",
+    "tconstruct.CraftingStationLogicMixin"
   ],
   "client": [
-    "nei.MixinRecipeHandlerRef",
+    "ae2.AEBaseGuiMixin",
+    "ae2.GuiCraftingCPUMixin",
+    "ae2.GuiPatternTermEncodeMixin",
+    "ae2.GuiPatternTermExEncodeMixin",
+    "ae2.ItemMultiMaterialMixin",
+    "ae2.ItemRepoMixin",
     "nei.MixinDefaultOverlayHandler",
-    "GuiContainerAccessor"
+    "nei.MixinRecipeHandlerRef",
+    "nei.NEIShortcutInputHandlerMixin",
+    "vp.UndergroundFluidLayerManagerMixin",
+    "vp.VeinTypeCachingMixin"
   ],
   "server": [
   ],

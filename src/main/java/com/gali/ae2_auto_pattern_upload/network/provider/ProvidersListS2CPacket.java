@@ -1,4 +1,4 @@
-package com.gali.ae2_auto_pattern_upload.network;
+package com.gali.ae2_auto_pattern_upload.network.provider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,17 +18,21 @@ public class ProvidersListS2CPacket implements IMessage {
     private List<Long> ids;
     private List<String> names;
     private List<Integer> emptySlots;
+    private List<Boolean> canInstallCard; // 是否可以安装样板容量卡
 
     public ProvidersListS2CPacket() {
         this.ids = new ArrayList<Long>();
         this.names = new ArrayList<String>();
         this.emptySlots = new ArrayList<Integer>();
+        this.canInstallCard = new ArrayList<Boolean>();
     }
 
-    public ProvidersListS2CPacket(List<Long> ids, List<String> names, List<Integer> emptySlots) {
+    public ProvidersListS2CPacket(List<Long> ids, List<String> names, List<Integer> emptySlots,
+        List<Boolean> canInstallCard) {
         this.ids = ids;
         this.names = names;
         this.emptySlots = emptySlots;
+        this.canInstallCard = canInstallCard;
     }
 
     @Override
@@ -37,11 +41,13 @@ public class ProvidersListS2CPacket implements IMessage {
         ids = new ArrayList<Long>(size);
         names = new ArrayList<String>(size);
         emptySlots = new ArrayList<Integer>(size);
+        canInstallCard = new ArrayList<Boolean>(size);
 
         for (int i = 0; i < size; i++) {
             ids.add(buf.readLong());
             names.add(readString(buf));
             emptySlots.add(buf.readInt());
+            canInstallCard.add(buf.readBoolean());
         }
     }
 
@@ -52,6 +58,7 @@ public class ProvidersListS2CPacket implements IMessage {
             buf.writeLong(ids.get(i));
             writeString(buf, names.get(i));
             buf.writeInt(emptySlots.get(i));
+            buf.writeBoolean(canInstallCard.get(i));
         }
     }
 
@@ -78,9 +85,20 @@ public class ProvidersListS2CPacket implements IMessage {
                 @Override
                 public void run() {
                     GuiScreen current = Minecraft.getMinecraft().currentScreen;
-                    Minecraft.getMinecraft()
-                        .displayGuiScreen(
-                            new GuiProviderSelect(current, message.ids, message.names, message.emptySlots));
+                    // 如果当前已经是GuiProviderSelect，更新数据而不是创建新的
+                    if (current instanceof GuiProviderSelect) {
+                        ((GuiProviderSelect) current)
+                            .updateData(message.ids, message.names, message.emptySlots, message.canInstallCard);
+                    } else {
+                        Minecraft.getMinecraft()
+                            .displayGuiScreen(
+                                new GuiProviderSelect(
+                                    current,
+                                    message.ids,
+                                    message.names,
+                                    message.emptySlots,
+                                    message.canInstallCard));
+                    }
                 }
             });
             return null;

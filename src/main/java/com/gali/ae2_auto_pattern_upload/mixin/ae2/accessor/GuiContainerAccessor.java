@@ -1,11 +1,10 @@
-package com.gali.ae2_auto_pattern_upload.mixin;
+package com.gali.ae2_auto_pattern_upload.mixin.ae2.accessor;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@SuppressWarnings("MixinAnnotationTarget")
 @Mixin(GuiContainer.class)
 public interface GuiContainerAccessor {
 
@@ -15,7 +14,9 @@ public interface GuiContainerAccessor {
     @Accessor("guiTop")
     int getGuiTop();
 
+    @Accessor("xSize")
+    int getXSize();
+
     @Accessor("ySize")
     int getYSize();
-
 }
