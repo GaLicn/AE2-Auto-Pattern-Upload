@@ -9,10 +9,6 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 
-import com.glodblock.github.client.gui.container.ContainerFluidPatternTerminal;
-import com.glodblock.github.client.gui.container.ContainerFluidPatternTerminalEx;
-import com.glodblock.github.inventory.item.IItemPatternTerminal;
-
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
@@ -20,7 +16,6 @@ import appeng.api.networking.IMachineSet;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.security.IActionHost;
 import appeng.container.implementations.ContainerPatternTerm;
-import appeng.container.implementations.ContainerPatternTermEx;
 import appeng.helpers.IInterfaceHost;
 import appeng.parts.AEBasePart;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -46,9 +41,7 @@ public class RequestProvidersListPacket implements IMessage {
             }
 
             Container container = player.openContainer;
-            if (!(container instanceof ContainerPatternTerm) && !(container instanceof ContainerPatternTermEx)
-                && !(container instanceof ContainerFluidPatternTerminal)
-                && !(container instanceof ContainerFluidPatternTerminalEx)) {
+            if (!(container instanceof ContainerPatternTerm)) {
                 return null;
             }
 
@@ -113,22 +106,6 @@ public class RequestProvidersListPacket implements IMessage {
         private IActionHost resolveTerminal(Container container) {
             if (container instanceof ContainerPatternTerm term) {
                 return term.getPatternTerminal();
-            }
-            if (container instanceof ContainerPatternTermEx termEx) {
-                return termEx.getPatternTerminal();
-            }
-            if (container instanceof ContainerFluidPatternTerminal fluidTerm) {
-                return fromPatternTerminal(fluidTerm.getPatternTerminal());
-            }
-            if (container instanceof ContainerFluidPatternTerminalEx fluidTermEx) {
-                return fromPatternTerminal(fluidTermEx.getPatternTerminal());
-            }
-            return null;
-        }
-
-        private IActionHost fromPatternTerminal(IItemPatternTerminal terminal) {
-            if (terminal instanceof IActionHost actionHost) {
-                return actionHost;
             }
             return null;
         }
