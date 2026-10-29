@@ -3,7 +3,7 @@
 	"modList": [{
 		"modid": "ae2_auto_pattern_upload",
 		"name": "AE2 Auto Pattern Upload Fork",
-		"description": "Forked from GaLi's AE2 Auto Pattern Upload and expanded by C-H716 with additional AE2, NEI, VisualProspecting and utility integrations for GTNH gameplay.",
+		"description": "AE2 pattern uploading and AE2/NEI inventory, crafting and provider interactions for GTNH gameplay. Originally created by GaLi and expanded by C-H716.",
 		"version": "2.0.2",
 		"mcversion": "1.7.10",
 		"url": "https://github.com/C-H716/AE2-Auto-Pattern-Upload",
