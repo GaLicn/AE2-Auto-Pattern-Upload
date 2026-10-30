@@ -35,7 +35,7 @@
  */
 dependencies {
     //runtimeOnlyNonPublishable("com.github.GTNewHorizons:NotEnoughItems:2.7.69-GTNH:dev")
-    devOnlyNonPublishable("com.github.GTNewHorizons:Applied-Energistics-2-Unofficial:rv3-beta-977-GTNH:dev")
+    devOnlyNonPublishable("com.github.GTNewHorizons:Applied-Energistics-2-Unofficial:rv3-beta-1080-GTNH:dev")
     devOnlyNonPublishable("com.github.GTNewHorizons:NotEnoughItems:2.8.101-GTNH:dev")
     devOnlyNonPublishable("com.github.GTNewHorizons:AE2FluidCraft-Rework:1.5.88-gtnh:dev")
     devOnlyNonPublishable("com.github.GTNewHorizons:CodeChickenCore:1.4.7:dev")

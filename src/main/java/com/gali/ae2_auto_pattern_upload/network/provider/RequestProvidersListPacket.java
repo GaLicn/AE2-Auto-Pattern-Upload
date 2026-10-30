@@ -8,6 +8,7 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.IChatComponent;
 import net.minecraft.util.StatCollector;
 
 import com.gali.ae2_auto_pattern_upload.mixin.ae2.accessor.AEBaseContainerAccessor;
@@ -295,7 +296,9 @@ public class RequestProvidersListPacket implements IMessage {
 
         private String resolveDisplayName(IInterfaceViewable viewable) {
             String rawName = viewable.getRawName();
-            String suffix = viewable.getNameSuffix();
+            // 新版 AE2 返回聊天组件，提取文本后保持原有供应器名称匹配方式。
+            IChatComponent suffixComponent = viewable.getNameSuffix();
+            String suffix = suffixComponent == null ? null : suffixComponent.getUnformattedText();
             if (isValidProviderName(rawName)) {
                 String translated = translateProviderName(rawName);
                 if (translated != null && !translated.isEmpty()) {

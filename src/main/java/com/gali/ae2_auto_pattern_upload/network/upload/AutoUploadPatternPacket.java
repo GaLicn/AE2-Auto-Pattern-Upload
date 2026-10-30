@@ -10,6 +10,7 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentTranslation;
+import net.minecraft.util.IChatComponent;
 import net.minecraft.util.StatCollector;
 
 import com.gali.ae2_auto_pattern_upload.network.ModNetwork;
@@ -526,7 +527,9 @@ public class AutoUploadPatternPacket implements IMessage {
 
         private String resolveDisplayName(IInterfaceViewable viewable) {
             String rawName = viewable.getRawName();
-            String suffix = viewable.getNameSuffix();
+            // 与手动上传列表一致，将新版 AE2 的名称后缀组件转换为文本。
+            IChatComponent suffixComponent = viewable.getNameSuffix();
+            String suffix = suffixComponent == null ? null : suffixComponent.getUnformattedText();
             if (isValidProviderName(rawName)) {
                 String translated = translateProviderName(rawName);
                 if (translated != null && !translated.isEmpty()) {

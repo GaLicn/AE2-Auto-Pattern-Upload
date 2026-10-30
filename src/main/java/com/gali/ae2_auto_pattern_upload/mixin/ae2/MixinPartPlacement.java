@@ -9,11 +9,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import appeng.api.parts.IPartHost;
+import appeng.api.parts.SelectedPart;
 import appeng.parts.PartPlacement;
 import appeng.util.Platform;
 
@@ -24,30 +25,18 @@ import appeng.util.Platform;
 @Mixin(value = PartPlacement.class, remap = false)
 public class MixinPartPlacement {
 
-    // 使用ThreadLocal存储当前处理的玩家
-    private static final ThreadLocal<EntityPlayer> currentPlayer = new ThreadLocal<>();
-
-    /**
-     * 在place方法开头注入，保存玩家引用
-     */
-    @Inject(method = "place", at = @At("HEAD"), cancellable = false)
-    private static void onPlaceStart(net.minecraft.item.ItemStack held, int x, int y, int z, int face,
-        EntityPlayer player, World world, appeng.parts.PartPlacement.PlaceType pass, int depth,
-        CallbackInfoReturnable<Boolean> cir) {
-        currentPlayer.set(player);
-    }
-
     /**
      * Redirect spawnDrops调用，让掉落物优先进入玩家背包
      */
     @Redirect(
-        method = "place",
+        method = "wrenchLogic",
         at = @At(
             value = "INVOKE",
             target = "Lappeng/util/Platform;spawnDrops(Lnet/minecraft/world/World;IIILjava/util/List;)V",
             ordinal = 0))
-    private static void redirectSpawnDrops(World world, int x, int y, int z, List<ItemStack> drops) {
-        EntityPlayer player = currentPlayer.get();
+    private static void redirectSpawnDrops(World world, int x, int y, int z, List<ItemStack> drops, EntityPlayer player,
+        World originalWorld, int originalX, int originalY, int originalZ, IPartHost host, SelectedPart selectedPart) {
+        // 新版 AE2 在 wrenchLogic 中拆卸部件，直接捕获当前调用的玩家，避免跨调用遗留状态。
 
         if (player == null || !Platform.isServer()) {
             Platform.spawnDrops(world, x, y, z, drops);
@@ -84,6 +73,7 @@ public class MixinPartPlacement {
      * @param itemStack 要添加的物品
      * @return 如果有剩余物品无法放入，返回剩余物品；否则返回null
      */
+    @Unique
     private static ItemStack addItemToPlayerInventory(EntityPlayer player, ItemStack itemStack) {
         if (player == null || itemStack == null || itemStack.stackSize <= 0) {
             return itemStack;

@@ -9,6 +9,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -22,27 +23,23 @@ import appeng.util.Platform;
  * Mixin修改AE2的AEBaseTileBlock类
  * 当使用扳手shift右键破坏AE2方块时，掉落物优先进入玩家背包
  */
-@Mixin(value = AEBaseTileBlock.class, remap = false)
+@Mixin(AEBaseTileBlock.class)
 public class MixinAEBaseTileBlock {
 
-    // 使用ThreadLocal存储当前处理的玩家
-    private static final ThreadLocal<EntityPlayer> currentPlayer = new ThreadLocal<>();
-
     /**
-     * 在onBlockActivated方法中，当检测到是扳手shift右键时，保存玩家引用
-     * 在removedByPlayer调用之前注入，以便设置disableDrops
+     * 在扳手拆卸前禁用额外掉落，避免重复生成物品
      */
     @Inject(
         method = "onBlockActivated",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/block/Block;removedByPlayer(Lnet/minecraft/world/World;Lnet/minecraft/entity/player/EntityPlayer;IIIZ)Z",
+            remap = false,
             ordinal = 0),
         cancellable = false)
     private void onBeforeRemoveBlock(World w, int x, int y, int z, EntityPlayer player, int side, float hitX,
         float hitY, float hitZ, CallbackInfoReturnable<Boolean> cir) {
         if (player != null && player.isSneaking()) {
-            currentPlayer.set(player);
             // 禁用breakBlock中的掉落物生成，因为我们会在onBlockActivated中处理
             AEBaseTile tile = ((AEBaseTileBlock) (Object) this).getTileEntity(w, x, y, z);
             if (tile != null) {
@@ -59,17 +56,17 @@ public class MixinAEBaseTileBlock {
         at = @At(
             value = "INVOKE",
             target = "Lappeng/util/Platform;spawnDrops(Lnet/minecraft/world/World;IIILjava/util/List;)V",
+            remap = false,
             ordinal = 0))
-    private void redirectSpawnDrops(World world, int x, int y, int z, List<ItemStack> drops) {
-        EntityPlayer player = currentPlayer.get();
+    private void redirectSpawnDrops(World world, int x, int y, int z, List<ItemStack> drops, World originalWorld,
+        int originalX, int originalY, int originalZ, EntityPlayer player, int side, float hitX, float hitY,
+        float hitZ) {
+        // onBlockActivated 是 Minecraft 方法，需要生成运行环境映射；玩家直接取自当前调用参数。
 
         if (player == null || !Platform.isServer()) {
             Platform.spawnDrops(world, x, y, z, drops);
             return;
         }
-
-        // 清除ThreadLocal
-        currentPlayer.remove();
 
         // 创建一个新的列表存储无法放入背包的物品
         List<ItemStack> remainingDrops = new LinkedList<>();
@@ -101,6 +98,7 @@ public class MixinAEBaseTileBlock {
      * @param itemStack 要添加的物品
      * @return 如果有剩余物品无法放入，返回剩余物品；否则返回null
      */
+    @Unique
     private static ItemStack addItemToPlayerInventory(EntityPlayer player, ItemStack itemStack) {
         if (player == null || itemStack == null || itemStack.stackSize <= 0) {
             return itemStack;
